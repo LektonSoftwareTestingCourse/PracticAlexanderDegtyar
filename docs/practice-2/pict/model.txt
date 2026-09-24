@@ -1,0 +1,25 @@
+card_status:        ACTIVE, INACTIVE, BLOCKED, EXPIRED
+amount_vs_daily:    below, equal, above
+amount_vs_monthly:  below, equal, above
+amount_vs_balance:  below, equal, above
+expiry:             valid, current_month, expired
+terminal_type:      pos, atm, ecom
+mcc:                grocery, restaurant, electronics, travel
+
+# --- Ограничения модели -------------------------------------------------
+#
+# C1. Карта не в статусе ACTIVE отклоняется на шаге 2 алгоритма — до любых
+#     проверок сумм. Комбинации с превышениями лимитов и баланса для таких
+#     карт недостижимы.
+IF [card_status] <> "ACTIVE" THEN [amount_vs_daily] = "below"
+    AND [amount_vs_monthly] = "below" AND [amount_vs_balance] = "below";
+
+# C2. Просроченная карта отклоняется на шаге 3 — проверка баланса недостижима.
+IF [expiry] = "expired" THEN [amount_vs_balance] = "below";
+
+# C3. Генератор карт задаёт monthlyLimit = dailyLimit * 30.
+#     Сумма, превышающая месячный лимит, неизбежно превышает и дневной.
+IF [amount_vs_monthly] = "above" THEN [amount_vs_daily] = "above";
+
+# C4. Статус EXPIRED согласован с просроченной датой окончания действия.
+IF [card_status] = "EXPIRED" THEN [expiry] = "expired";

@@ -31,15 +31,18 @@ def get(row, name):
 
 
 def is_valid(row):
-    """Ограничений нет: любое сочетание классов достижимо одним запросом."""
+    daily = get(row, "daily_limit")
+    monthly = get(row, "monthly_limit")
+
+    if daily == "zero" and monthly == "below_daily":
+        return False
+
     return True
 
 
 def expected_outcome(row):
     d = dict(zip(PARAM_NAMES, row))
 
-    # Bean Validation проверяет все поля одновременно (не последовательно) -
-    # любое нарушение формата/знака даёт 400, независимо от остальных полей.
     if d["bin"] == "invalid_format":
         return "400", "VALIDATION_ERROR (bin)"
     if d["cardholder_name"] in ("empty", "invalid_chars"):
@@ -51,14 +54,9 @@ def expected_outcome(row):
     if d["monthly_limit"] == "negative":
         return "400", "VALIDATION_ERROR (monthlyLimit)"
 
-    # Проверка существования BIN у эмитента - только после того, как все
-    # поля прошли формат-валидацию (последовательный шаг в сервисном слое).
     if d["bin"] == "unregistered_valid":
         return "404", "BIN_NOT_FOUND"
 
-    # monthlyLimit < dailyLimit и отрицательный initialBalance НЕ отклоняются
-    # при создании (правило есть только в Card.withData(), используется в
-    # PATCH, но не в Card.fromDraft()) - карта создаётся как есть.
     return "201", "CREATED"
 
 

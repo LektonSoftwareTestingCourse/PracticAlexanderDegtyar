@@ -4,3 +4,5 @@ currency_code:     valid, wrong_length, non_digit
 daily_limit:       positive, zero, negative
 monthly_limit:     above_daily, equal_daily, below_daily, negative
 initial_balance:   positive, zero, negative
+
+IF [daily_limit] = "zero" THEN [monthly_limit] <> "below_daily";

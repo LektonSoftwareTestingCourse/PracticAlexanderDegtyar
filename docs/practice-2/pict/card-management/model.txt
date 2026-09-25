@@ -1,0 +1,6 @@
+bin:              registered_valid, unregistered_valid, invalid_format
+cardholder_name:   valid, empty, invalid_chars
+currency_code:     valid, wrong_length, non_digit
+daily_limit:       positive, zero, negative
+monthly_limit:     above_daily, equal_daily, below_daily, negative
+initial_balance:   positive, zero, negative

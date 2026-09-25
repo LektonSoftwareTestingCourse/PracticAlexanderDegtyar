@@ -1,0 +1,20 @@
+#      bin                 cardholder_name  currency_code  daily_limit  monthly_limit  initial_balance  expected_code  expected_reason
+--------------------------------------------------------------------------------------------------------------------------------------
+CM-01  registered_valid    valid            valid          positive     above_daily    positive         201            CREATED
+CM-02  unregistered_valid  empty            wrong_length   zero         equal_daily    positive         400            VALIDATION_ERROR (cardholderName)
+CM-03  invalid_format      invalid_chars    non_digit      negative     below_daily    positive         400            VALIDATION_ERROR (bin)
+CM-04  invalid_format      empty            valid          negative     negative       zero             400            VALIDATION_ERROR (bin)
+CM-05  unregistered_valid  valid            non_digit      zero         negative       negative         400            VALIDATION_ERROR (currencyCode)
+CM-06  registered_valid    invalid_chars    wrong_length   positive     negative       negative         400            VALIDATION_ERROR (cardholderName)
+CM-07  registered_valid    empty            non_digit      positive     below_daily    zero             400            VALIDATION_ERROR (cardholderName)
+CM-08  unregistered_valid  invalid_chars    valid          zero         above_daily    zero             400            VALIDATION_ERROR (cardholderName)
+CM-09  invalid_format      valid            wrong_length   negative     equal_daily    zero             400            VALIDATION_ERROR (bin)
+CM-10  invalid_format      empty            valid          zero         above_daily    negative         400            VALIDATION_ERROR (bin)
+CM-11  unregistered_valid  valid            valid          negative     below_daily    negative         400            VALIDATION_ERROR (dailyLimit)
+CM-12  registered_valid    invalid_chars    wrong_length   negative     equal_daily    negative         400            VALIDATION_ERROR (cardholderName)
+CM-13  registered_valid    invalid_chars    wrong_length   zero         below_daily    negative         400            VALIDATION_ERROR (cardholderName)
+CM-14  unregistered_valid  invalid_chars    non_digit      positive     equal_daily    negative         400            VALIDATION_ERROR (cardholderName)
+CM-15  invalid_format      invalid_chars    wrong_length   positive     above_daily    negative         400            VALIDATION_ERROR (bin)
+CM-16  invalid_format      invalid_chars    valid          negative     equal_daily    negative         400            VALIDATION_ERROR (bin)
+CM-17  invalid_format      invalid_chars    non_digit      negative     above_daily    negative         400            VALIDATION_ERROR (bin)
+CM-18  invalid_format      invalid_chars    valid          negative     negative       positive         400            VALIDATION_ERROR (bin)

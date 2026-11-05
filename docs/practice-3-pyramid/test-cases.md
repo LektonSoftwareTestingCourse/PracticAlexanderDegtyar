@@ -193,7 +193,7 @@
 
 3. E2E мало (2 кейса, ~3 %). Сквозная цепочка Gateway ->
 Switch -> Authorization -> CMS -> RabbitMQ -> Logger/Notification поднимает 9
-контейнеров, зависит от eventual consistency (polling до 5–10 s). 
+контейнеров, зависит от eventual consistency (polling до 5–10 s).
 4. В E2E оставлено только то, что нельзя увидеть ниже:
 - TC-P3-16 - «склейка» всех сервисов и обоих async-потоков в одном
   пользовательском сценарии (по смыслу smoke);

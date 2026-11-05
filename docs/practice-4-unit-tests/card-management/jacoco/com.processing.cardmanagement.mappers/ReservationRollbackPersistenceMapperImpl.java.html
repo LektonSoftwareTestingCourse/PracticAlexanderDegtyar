@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReservationRollbackPersistenceMapperImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">card-management</a> &gt; <a href="index.source.html" class="el_package">com.processing.cardmanagement.mappers</a> &gt; <span class="el_source">ReservationRollbackPersistenceMapperImpl.java</span></div><h1>ReservationRollbackPersistenceMapperImpl.java</h1><pre class="source lang-java linenums">package com.processing.cardmanagement.mappers;
+
+import com.processing.cardmanagement.models.ReservationEntity;
+import com.processing.cardmanagement.models.ReservationRollback;
+import com.processing.cardmanagement.models.ReservationRollbackEntity;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.UUID;
+import javax.annotation.processing.Generated;
+import org.springframework.stereotype.Component;
+
+@Generated(
+    value = &quot;org.mapstruct.ap.MappingProcessor&quot;,
+    date = &quot;2026-11-05T12:17:58+0300&quot;,
+    comments = &quot;version: 1.6.3, compiler: javac, environment: Java 21.0.3 (Oracle Corporation)&quot;
+)
+@Component
+<span class="nc" id="L18">public class ReservationRollbackPersistenceMapperImpl implements ReservationRollbackPersistenceMapper {</span>
+
+    @Override
+    public ReservationRollbackEntity toEntity(ReservationRollback rollback) {
+<span class="nc bnc" id="L22" title="All 2 branches missed.">        if ( rollback == null ) {</span>
+<span class="nc" id="L23">            return null;</span>
+        }
+
+<span class="nc" id="L26">        ReservationRollbackEntity reservationRollbackEntity = new ReservationRollbackEntity();</span>
+
+<span class="nc" id="L28">        reservationRollbackEntity.setReservation( reservationRollbackToReservationEntity( rollback ) );</span>
+<span class="nc" id="L29">        reservationRollbackEntity.setId( rollback.id() );</span>
+<span class="nc" id="L30">        reservationRollbackEntity.setPan( rollback.pan() );</span>
+<span class="nc" id="L31">        reservationRollbackEntity.setRollbackAmount( rollback.rollbackAmount() );</span>
+<span class="nc" id="L32">        reservationRollbackEntity.setRrn( rollback.rrn() );</span>
+<span class="nc" id="L33">        reservationRollbackEntity.setCreatedAt( rollback.createdAt() );</span>
+
+<span class="nc" id="L35">        return reservationRollbackEntity;</span>
+    }
+
+    @Override
+    public ReservationRollback toDomain(ReservationRollbackEntity entity) {
+<span class="nc bnc" id="L40" title="All 2 branches missed.">        if ( entity == null ) {</span>
+<span class="nc" id="L41">            return null;</span>
+        }
+
+<span class="nc" id="L44">        UUID reservationId = null;</span>
+<span class="nc" id="L45">        UUID id = null;</span>
+<span class="nc" id="L46">        String pan = null;</span>
+<span class="nc" id="L47">        BigDecimal rollbackAmount = null;</span>
+<span class="nc" id="L48">        String rrn = null;</span>
+<span class="nc" id="L49">        Instant createdAt = null;</span>
+
+<span class="nc" id="L51">        reservationId = entityReservationId( entity );</span>
+<span class="nc" id="L52">        id = entity.getId();</span>
+<span class="nc" id="L53">        pan = entity.getPan();</span>
+<span class="nc" id="L54">        rollbackAmount = entity.getRollbackAmount();</span>
+<span class="nc" id="L55">        rrn = entity.getRrn();</span>
+<span class="nc" id="L56">        createdAt = entity.getCreatedAt();</span>
+
+<span class="nc" id="L58">        ReservationRollback reservationRollback = new ReservationRollback( id, reservationId, pan, rollbackAmount, rrn, createdAt );</span>
+
+<span class="nc" id="L60">        return reservationRollback;</span>
+    }
+
+    @Override
+    public void updateEntityFromDomain(ReservationRollback rollback, ReservationRollbackEntity entity) {
+<span class="nc bnc" id="L65" title="All 2 branches missed.">        if ( rollback == null ) {</span>
+<span class="nc" id="L66">            return;</span>
+        }
+
+<span class="nc" id="L69">        entity.setRollbackAmount( rollback.rollbackAmount() );</span>
+<span class="nc" id="L70">        entity.setCreatedAt( rollback.createdAt() );</span>
+<span class="nc" id="L71">    }</span>
+
+    protected ReservationEntity reservationRollbackToReservationEntity(ReservationRollback reservationRollback) {
+<span class="nc bnc" id="L74" title="All 2 branches missed.">        if ( reservationRollback == null ) {</span>
+<span class="nc" id="L75">            return null;</span>
+        }
+
+<span class="nc" id="L78">        ReservationEntity reservationEntity = new ReservationEntity();</span>
+
+<span class="nc" id="L80">        reservationEntity.setId( reservationRollback.reservationId() );</span>
+
+<span class="nc" id="L82">        return reservationEntity;</span>
+    }
+
+    private UUID entityReservationId(ReservationRollbackEntity reservationRollbackEntity) {
+<span class="nc" id="L86">        ReservationEntity reservation = reservationRollbackEntity.getReservation();</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">        if ( reservation == null ) {</span>
+<span class="nc" id="L88">            return null;</span>
+        }
+<span class="nc" id="L90">        return reservation.getId();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

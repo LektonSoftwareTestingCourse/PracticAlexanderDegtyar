@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Reservation.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">card-management</a> &gt; <a href="index.source.html" class="el_package">com.processing.cardmanagement.models</a> &gt; <span class="el_source">Reservation.java</span></div><h1>Reservation.java</h1><pre class="source lang-java linenums">package com.processing.cardmanagement.models;
+
+import com.processing.cardmanagement.exceptions.RollbackAlreadySatisfiedException;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.Objects;
+import java.util.UUID;
+
+/**
+ * Информация об удержании средств
+ *
+ * @param id                идентификатор
+ * @param pan               номер карты
+ * @param reservationAmount количество удерживаемых средств
+ * @param rrn               RRN-номер
+ * @param status            статус
+ * @param createdAt         дата создания
+ * @param updatedAt         дата изменения
+ */
+<span class="fc" id="L21">public record Reservation(</span>
+    UUID id,
+    String pan,
+    BigDecimal reservationAmount,
+    String rrn,
+    ReservationStatus status,
+    Instant createdAt,
+    Instant updatedAt
+) {
+
+    public Reservation(String pan, BigDecimal amount, String rrn) {
+<span class="fc" id="L32">        this(</span>
+<span class="fc" id="L33">            UUID.randomUUID(),</span>
+            pan,
+            amount,
+            rrn,
+            ReservationStatus.RESERVED,
+<span class="fc" id="L38">            Instant.now(),</span>
+<span class="fc" id="L39">            Instant.now()</span>
+        );
+<span class="fc" id="L41">    }</span>
+
+    /**
+     * Создает возврат средств за удержание
+     *
+     * @param rollbackAmount количество возвращаемых средств
+     * @return измененную сущность
+     */
+    public ReservationRollback startRollback(BigDecimal rollbackAmount) {
+<span class="fc bfc" id="L50" title="All 2 branches covered.">        if (status == ReservationStatus.ROLLED_BACK) {</span>
+<span class="fc" id="L51">            throw new RollbackAlreadySatisfiedException(rrn);</span>
+        }
+
+<span class="fc" id="L54">        return new ReservationRollback(</span>
+<span class="fc" id="L55">            UUID.randomUUID(),</span>
+            this.id,
+            pan,
+            rollbackAmount,
+            rrn,
+            createdAt
+        );
+    }
+
+    /**
+     * Помечает, что средства за удержание были возвращены
+     *
+     * @param rollback роллбек удержания
+     * @return сущность с обновленными данными
+     */
+    public Reservation rolledBack(ReservationRollback rollback) {
+<span class="fc bfc" id="L71" title="All 2 branches covered.">        if (!Objects.equals(this.id, rollback.reservationId())) {</span>
+<span class="fc" id="L72">            throw new IllegalArgumentException(&quot;Rollback's reservation ID and this ID differ&quot;);</span>
+        }
+<span class="fc" id="L74">        return new Reservation(</span>
+            id,
+            pan,
+            reservationAmount,
+            rrn,
+            ReservationStatus.ROLLED_BACK,
+            createdAt,
+<span class="fc" id="L81">            Instant.now()</span>
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

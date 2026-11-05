@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthControllerImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">authorization</a> &gt; <a href="index.source.html" class="el_package">com.processing.authorization.controller</a> &gt; <span class="el_source">AuthControllerImpl.java</span></div><h1>AuthControllerImpl.java</h1><pre class="source lang-java linenums">package com.processing.authorization.controller;
+
+import com.processing.common.dto.authorization.AuthorizationRequest;
+import com.processing.common.dto.authorization.AuthorizationResponse;
+import com.processing.authorization.services.AuthServiceImpl;
+import com.processing.common.dto.authorization.RollbackRequest;
+import com.processing.common.dto.authorization.RollbackResponse;
+import jakarta.validation.Valid;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import java.time.Instant;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import static com.processing.authorization.constants.DeclineOutcome.*;
+
+<span class="fc" id="L30">@Slf4j</span>
+@RestController
+@RequestMapping(&quot;/api/internal&quot;)
+@RequiredArgsConstructor
+@Tag(name = &quot;Authorization&quot;, description = &quot;Endpoint for authorizing cards&quot;)
+public class AuthControllerImpl implements AuthController {
+    private final AuthServiceImpl authService;
+
+    @PostMapping(&quot;/authorize&quot;)
+    @Operation(summary = &quot;Authorization&quot;, description = &quot;Approves or declines card by pan&quot;)
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = &quot;200&quot;,
+                    description = &quot;Authorization success&quot;,
+                    content = @Content(schema = @Schema(implementation = AuthorizationResponse.class))),
+            @ApiResponse(
+                    responseCode = &quot;400&quot;,
+                    description = &quot;Incorrect request or unknown error&quot;,
+                    content = @Content(schema = @Schema(implementation = AuthorizationResponse.class))),
+            @ApiResponse(
+                    responseCode = &quot;403&quot;,
+                    description = &quot;Card blocked, inactive or expired&quot;,
+                    content = @Content(schema = @Schema(implementation = AuthorizationResponse.class))),
+            @ApiResponse(
+                    responseCode = &quot;404&quot;,
+                    description = &quot;Card not found&quot;,
+                    content = @Content(schema = @Schema(implementation = AuthorizationResponse.class))),
+            @ApiResponse(
+                    responseCode = &quot;422&quot;,
+                    description = &quot;Insufficient funds &quot;,
+                    content = @Content(schema = @Schema(implementation = AuthorizationResponse.class))),
+            @ApiResponse(
+                    responseCode = &quot;503&quot;,
+                    description = &quot;Card manager unavailable&quot;,
+                    content = @Content(schema = @Schema(implementation = AuthorizationResponse.class)))
+    })
+    public ResponseEntity&lt;AuthorizationResponse&gt; authorize(@Valid @RequestBody AuthorizationRequest request) {
+<span class="fc" id="L67">        Instant requestInputTime = Instant.now();</span>
+<span class="fc" id="L68">        AuthorizationResponse response = authService.authorize(request, requestInputTime);</span>
+
+<span class="fc" id="L70">        boolean isApproved = response.status().equals(AuthorizationResponse.STATUS_APPROVED);</span>
+        HttpStatus httpStatus;
+<span class="fc bfc" id="L72" title="All 2 branches covered.">        if (isApproved) {</span>
+<span class="fc" id="L73">            httpStatus = HttpStatus.OK;</span>
+        } else {
+<span class="fc" id="L75">            String declineReason = response.declineReason();</span>
+<span class="fc bfc" id="L76" title="All 5 branches covered.">            httpStatus = switch (declineReason) {</span>
+<span class="fc" id="L77">                case REASON_CARD_NOT_FOUND -&gt; HttpStatus.NOT_FOUND;</span>
+                case REASON_SERVICE_UNAVAILABLE,
+<span class="fc" id="L79">                     REASON_RESERVATION_FAILED -&gt; HttpStatus.SERVICE_UNAVAILABLE;</span>
+<span class="fc" id="L80">                case REASON_INSUFFICIENT_FUNDS -&gt; HttpStatus.UNPROCESSABLE_ENTITY;</span>
+                case REASON_CARD_EXPIRED,
+                     REASON_CARD_BLOCKED,
+<span class="fc" id="L83">                     REASON_CARD_INACTIVE -&gt; HttpStatus.FORBIDDEN;</span>
+<span class="fc" id="L84">                default -&gt; HttpStatus.BAD_REQUEST;</span>
+            };
+        }
+<span class="fc" id="L87">        return ResponseEntity.status(httpStatus).body(response);</span>
+    }
+
+    @PostMapping(&quot;/rollback&quot;)
+    @Operation(summary = &quot;Authorization&quot;, description = &quot;Rollbacks transaction&quot;)
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = &quot;200&quot;,
+                    description = &quot;Rollback success&quot;,
+                    content = @Content(schema = @Schema(implementation = RollbackResponse.class))),
+            @ApiResponse(
+                    responseCode = &quot;400&quot;,
+                    description = &quot;Incorrect request or unknown error&quot;,
+                    content = @Content(schema = @Schema(implementation = RollbackResponse.class))),
+            @ApiResponse(
+                    responseCode = &quot;404&quot;,
+                    description = &quot;Transaction not found&quot;,
+                    content = @Content(schema = @Schema(implementation = RollbackResponse.class))),
+            @ApiResponse(
+                    responseCode = &quot;409&quot;,
+                    description = &quot;Conflict: transaction already rolled back&quot;,
+                    content = @Content(schema = @Schema(implementation = RollbackResponse.class))),
+            @ApiResponse(
+                    responseCode = &quot;500&quot;,
+                    description = &quot;Internal server error: card management error&quot;,
+                    content = @Content(schema = @Schema(implementation = RollbackResponse.class))),
+            @ApiResponse(
+                    responseCode = &quot;503&quot;,
+                    description = &quot;Card management unavailable&quot;,
+                    content = @Content(schema = @Schema(implementation = RollbackResponse.class)))
+    })
+    public ResponseEntity&lt;RollbackResponse&gt; rollback(@Valid @RequestBody RollbackRequest request) {
+<span class="fc" id="L119">        Instant requestInputTime = Instant.now();</span>
+<span class="fc" id="L120">        RollbackResponse response = authService.rollback(request, requestInputTime);</span>
+
+<span class="fc" id="L122">        boolean isApproved = response.status().equals(RollbackResponse.STATUS_APPROVED);</span>
+        HttpStatus httpStatus;
+<span class="fc bfc" id="L124" title="All 2 branches covered.">        if (isApproved) {</span>
+<span class="fc" id="L125">            httpStatus = HttpStatus.OK;</span>
+        } else {
+<span class="fc" id="L127">            String declineReason = response.declineReason();</span>
+<span class="fc bfc" id="L128" title="All 4 branches covered.">            httpStatus = switch (declineReason) {</span>
+                case REASON_TRANSACTION_NOT_FOUND,
+<span class="fc" id="L130">                     REASON_CARD_NOT_FOUND -&gt; HttpStatus.NOT_FOUND;</span>
+<span class="fc" id="L131">                case REASON_ALREADY_ROLLED_BACK -&gt; HttpStatus.CONFLICT;</span>
+                case REASON_SERVICE_UNAVAILABLE,
+<span class="fc" id="L133">                     REASON_ROLLBACK_FAILED -&gt; HttpStatus.SERVICE_UNAVAILABLE;</span>
+<span class="fc" id="L134">                default -&gt; HttpStatus.BAD_REQUEST;</span>
+            };
+        }
+<span class="fc" id="L137">        return ResponseEntity.status(httpStatus).body(response);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

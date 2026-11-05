@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DownstreamServiceResolver.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gateway</a> &gt; <a href="index.source.html" class="el_package">com.processing.gateway.downstream</a> &gt; <span class="el_source">DownstreamServiceResolver.java</span></div><h1>DownstreamServiceResolver.java</h1><pre class="source lang-java linenums">package com.processing.gateway.downstream;
+
+import com.processing.gateway.properties.GatewayRouteProperties;
+import org.springframework.http.server.PathContainer;
+import org.springframework.stereotype.Component;
+import org.springframework.web.util.pattern.PathPattern;
+import org.springframework.web.util.pattern.PathPatternParser;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Resolves request paths to downstream service names using gateway route metadata.
+ */
+@Component
+public class DownstreamServiceResolver {
+
+    private static final String SERVICE_NAME_METADATA_KEY = &quot;serviceName&quot;;
+    private static final String PATH_PREDICATE_PREFIX = &quot;Path=&quot;;
+
+    private final List&lt;RouteMapping&gt; mappings;
+
+    /**
+     * Builds route mappings from configured Spring Cloud Gateway MVC routes.
+     *
+     * @param properties gateway route properties bound from configuration
+     */
+<span class="fc" id="L28">    public DownstreamServiceResolver(GatewayRouteProperties properties) {</span>
+<span class="fc" id="L29">        PathPatternParser parser = new PathPatternParser();</span>
+
+<span class="fc" id="L31">        this.mappings = properties.getRoutes().stream()</span>
+<span class="fc" id="L32">                .flatMap(route -&gt; toRouteMapping(route, parser).stream())</span>
+<span class="fc" id="L33">                .toList();</span>
+<span class="fc" id="L34">    }</span>
+
+    /**
+     * Resolves a request path to a downstream service name.
+     *
+     * @param path request URI path
+     * @return service name from route metadata, or empty when no route matches
+     */
+    public Optional&lt;String&gt; resolve(String path) {
+<span class="fc" id="L43">        PathContainer parsedPath = PathContainer.parsePath(path);</span>
+
+<span class="fc" id="L45">        return mappings.stream()</span>
+<span class="fc" id="L46">                .filter(mapping -&gt; mapping.patterns().stream()</span>
+<span class="fc" id="L47">                        .anyMatch(pattern -&gt; pattern.matches(parsedPath)))</span>
+<span class="fc" id="L48">                .map(RouteMapping::serviceName)</span>
+<span class="fc" id="L49">                .findFirst();</span>
+    }
+
+    private Optional&lt;RouteMapping&gt; toRouteMapping(GatewayRouteProperties.RouteDefinition route,
+                                                  PathPatternParser parser) {
+<span class="fc" id="L54">        String serviceName = route.getMetadata().get(SERVICE_NAME_METADATA_KEY);</span>
+<span class="pc bpc" id="L55" title="1 of 4 branches missed.">        if (serviceName == null || serviceName.isBlank()) {</span>
+<span class="fc" id="L56">            return Optional.empty();</span>
+        }
+
+<span class="fc" id="L59">        List&lt;PathPattern&gt; patterns = route.getPredicates().stream()</span>
+<span class="fc" id="L60">                .filter(predicate -&gt; predicate.startsWith(PATH_PREDICATE_PREFIX))</span>
+<span class="fc" id="L61">                .flatMap(predicate -&gt; parsePathPatterns(predicate, parser).stream())</span>
+<span class="fc" id="L62">                .toList();</span>
+
+<span class="fc bfc" id="L64" title="All 2 branches covered.">        if (patterns.isEmpty()) {</span>
+<span class="fc" id="L65">            return Optional.empty();</span>
+        }
+
+<span class="fc" id="L68">        return Optional.of(new RouteMapping(serviceName, patterns));</span>
+    }
+
+    private List&lt;PathPattern&gt; parsePathPatterns(String predicate, PathPatternParser parser) {
+<span class="fc" id="L72">        String rawPatterns = predicate.substring(PATH_PREDICATE_PREFIX.length());</span>
+
+<span class="fc" id="L74">        return List.of(rawPatterns.split(&quot;,&quot;)).stream()</span>
+<span class="fc" id="L75">                .map(String::trim)</span>
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">                .filter(pattern -&gt; !pattern.isBlank())</span>
+<span class="fc" id="L77">                .map(parser::parse)</span>
+<span class="fc" id="L78">                .toList();</span>
+    }
+
+<span class="fc" id="L81">    private record RouteMapping(String serviceName, List&lt;PathPattern&gt; patterns) {</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RabbitMQConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">card-management</a> &gt; <a href="index.source.html" class="el_package">com.processing.cardmanagement.config</a> &gt; <span class="el_source">RabbitMQConfig.java</span></div><h1>RabbitMQConfig.java</h1><pre class="source lang-java linenums">package com.processing.cardmanagement.config;
+
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.QueueBuilder;
+import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * RabbitMQ topology configuration for Card Management → Notification Service.
+ *
+ * &lt;p&gt;Declares exchange, queue, DLX/DLQ, and bindings for card events
+ * published via the outbox processor. The queue uses a topic exchange
+ * with routing key pattern {@code card.*}.&lt;/p&gt;
+ */
+@Configuration
+<span class="nc" id="L24">public class RabbitMQConfig {</span>
+
+    /** Topic exchange for card events. */
+    public static final String CARD_EVENTS_EXCHANGE = &quot;smp.card-events&quot;;
+
+    /** Routing key prefix for card events (producer uses &quot;card.&quot; + event class simple name). */
+    public static final String ROUTING_KEY_PREFIX = &quot;card.&quot;;
+
+    /** Durable queue consumed by Notification Service. */
+    public static final String QUEUE = &quot;card-notifications&quot;;
+
+    /** Dead-letter exchange (direct). */
+    public static final String DLX_EXCHANGE = &quot;smp.card-events.dlx&quot;;
+
+    /** Dead-letter queue for diagnostic purposes. */
+    public static final String DLQ_QUEUE = &quot;card-notifications-dlq&quot;;
+
+    /** Routing key used to bind DLX → DLQ. */
+    public static final String DLQ_ROUTING_KEY = &quot;card-notifications&quot;;
+
+    /** TTL for dead-letter queue messages (60 seconds). */
+    private static final int DLQ_TTL_MS = 60_000;
+
+    /** Topic exchange for card events. */
+    @Bean
+    public TopicExchange cardEventsExchange() {
+<span class="nc" id="L50">        return new TopicExchange(CARD_EVENTS_EXCHANGE, true, false);</span>
+    }
+
+    /**
+     * Durable main queue with dead-letter configuration.
+     *
+     * &lt;p&gt;After 3 delivery attempts (x-max-delivery) the message
+     * goes to DLX {@value #DLX_EXCHANGE}.&lt;/p&gt;
+     */
+    @Bean
+    public Queue cardNotificationsQueue() {
+<span class="nc" id="L61">        return QueueBuilder.durable(QUEUE)</span>
+<span class="nc" id="L62">                .withArgument(&quot;x-dead-letter-exchange&quot;, DLX_EXCHANGE)</span>
+<span class="nc" id="L63">                .withArgument(&quot;x-dead-letter-routing-key&quot;, DLQ_ROUTING_KEY)</span>
+<span class="nc" id="L64">                .withArgument(&quot;x-max-delivery&quot;, 3)</span>
+<span class="nc" id="L65">                .build();</span>
+    }
+
+    /** Binding: main exchange → main queue with pattern {@code card.*}. */
+    @Bean
+    public Binding cardNotificationsBinding(
+            TopicExchange cardEventsExchange,
+            Queue cardNotificationsQueue) {
+<span class="nc" id="L73">        return BindingBuilder.bind(cardNotificationsQueue)</span>
+<span class="nc" id="L74">                .to(cardEventsExchange)</span>
+<span class="nc" id="L75">                .with(ROUTING_KEY_PREFIX + &quot;*&quot;);</span>
+    }
+
+    /** Dead-letter exchange (direct). */
+    @Bean
+    public DirectExchange cardEventsDlx() {
+<span class="nc" id="L81">        return new DirectExchange(DLX_EXCHANGE, true, false);</span>
+    }
+
+    /**
+     * Dead-letter queue with {@value #DLQ_TTL_MS}ms TTL for diagnostics.
+     */
+    @Bean
+    public Queue cardNotificationsDlq() {
+<span class="nc" id="L89">        return QueueBuilder.durable(DLQ_QUEUE)</span>
+<span class="nc" id="L90">                .ttl(DLQ_TTL_MS)</span>
+<span class="nc" id="L91">                .build();</span>
+    }
+
+    /** Binding: DLX → DLQ with routing key. */
+    @Bean
+    public Binding cardDlqBinding(
+            DirectExchange cardEventsDlx,
+            Queue cardNotificationsDlq) {
+<span class="nc" id="L99">        return BindingBuilder.bind(cardNotificationsDlq)</span>
+<span class="nc" id="L100">                .to(cardEventsDlx)</span>
+<span class="nc" id="L101">                .with(DLQ_ROUTING_KEY);</span>
+    }
+
+    /**
+     * Configures Jackson-based JSON message converter for {@link RabbitTemplate}.
+     *
+     * &lt;p&gt;Ensures that {@link com.processing.cardmanagement.events.CardEvent}
+     * instances are serialized to JSON with type information.&lt;/p&gt;
+     */
+    @Bean
+    public MessageConverter jackson2JsonMessageConverter() {
+<span class="nc" id="L112">        return new Jackson2JsonMessageConverter();</span>
+    }
+
+    /**
+     * Pre-configured {@link RabbitTemplate} with JSON converter and
+     * publisher confirmations.
+     */
+    @Bean
+    public RabbitTemplate rabbitTemplate(
+            ConnectionFactory connectionFactory,
+            MessageConverter jackson2JsonMessageConverter) {
+<span class="nc" id="L123">        RabbitTemplate template = new RabbitTemplate(connectionFactory);</span>
+<span class="nc" id="L124">        template.setMessageConverter(jackson2JsonMessageConverter);</span>
+<span class="nc" id="L125">        return template;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

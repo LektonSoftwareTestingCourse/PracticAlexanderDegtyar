@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CardOutboxEventData.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">card-management</a> &gt; <a href="index.source.html" class="el_package">com.processing.cardmanagement.models</a> &gt; <span class="el_source">CardOutboxEventData.java</span></div><h1>CardOutboxEventData.java</h1><pre class="source lang-java linenums">package com.processing.cardmanagement.models;
+
+import com.processing.cardmanagement.events.CardOutboxEvent;
+import jakarta.annotation.Nullable;
+
+import java.time.Instant;
+import java.util.UUID;
+
+/**
+ * Модель события в outbox
+ *
+ * @param id          уникальный идентификатор
+ * @param event       событие которое нужно обработать
+ * @param createdAt   время создания события
+ * @param processedAt время обработки события
+ * @param retryCount  количество попыток обработки
+ * @param lastError   последняя ошибка пр иобработке
+ * @param status      стстус события
+ */
+<span class="fc" id="L20">public record CardOutboxEventData(</span>
+        UUID id,
+        CardOutboxEvent event,
+        Instant createdAt,
+        @Nullable Instant processedAt,
+        int retryCount,
+        @Nullable String lastError,
+        OutboxEventDataStatus status
+) {
+
+    /**
+     * Создает новое событие со статусом PENDING
+     *
+     * @param event событие для сохранения в outbox
+     */
+    public CardOutboxEventData(CardOutboxEvent event) {
+<span class="fc" id="L36">        this(</span>
+<span class="fc" id="L37">                UUID.randomUUID(),</span>
+                event,
+<span class="fc" id="L39">                Instant.now(),</span>
+                null,
+                0,
+                null,
+                OutboxEventDataStatus.PENDING
+        );
+<span class="fc" id="L45">    }</span>
+
+    /**
+     * Возвращает копию события со статусом PROCESSED и временем обработки
+     *
+     * @return обработанное событие
+     */
+    public CardOutboxEventData processed() {
+<span class="fc" id="L53">        return new CardOutboxEventData(</span>
+                id,
+                event,
+                createdAt,
+<span class="fc" id="L57">                Instant.now(),</span>
+                retryCount,
+                lastError,
+                OutboxEventDataStatus.PROCESSED
+        );
+    }
+
+    /**
+     * Возвращает копию события с увеличенным счетчиком попыток и текстом ошибки
+     *
+     * @param error текст ошибки при обработке
+     * @return событие с увеличенным retry count
+     */
+    public CardOutboxEventData withRetry(String error) {
+<span class="fc" id="L71">        return new CardOutboxEventData(</span>
+                id,
+                event,
+                createdAt,
+                processedAt,
+                retryCount + 1,
+                error,
+                status
+        );
+    }
+
+    /**
+     * Возвращает копию события со статусом FAILED
+     * Вызывается когда исчерпаны все попытки обработки
+     *
+     * @return событие со статусом FAILED
+     */
+    public CardOutboxEventData failed() {
+<span class="fc" id="L89">        return new CardOutboxEventData(</span>
+                id,
+                event,
+                createdAt,
+                processedAt,
+                retryCount,
+                lastError,
+                OutboxEventDataStatus.FAILED
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

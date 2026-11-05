@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BinIssuerJpaAdapter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">card-management</a> &gt; <a href="index.source.html" class="el_package">com.processing.cardmanagement.repositories</a> &gt; <span class="el_source">BinIssuerJpaAdapter.java</span></div><h1>BinIssuerJpaAdapter.java</h1><pre class="source lang-java linenums">package com.processing.cardmanagement.repositories;
+
+import com.processing.cardmanagement.models.BinIssuer;
+import com.processing.cardmanagement.models.BinIssuerEntity;
+import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+import java.util.Optional;
+
+@RequiredArgsConstructor
+public class BinIssuerJpaAdapter implements BinIssuerRepository {
+
+    private final BinIssuerJpaRepository jpaRepository;
+
+    @Override
+    public Optional&lt;BinIssuer&gt; findByBin(String bin) {
+<span class="nc" id="L17">        return jpaRepository.findById(bin)</span>
+<span class="nc" id="L18">                .map(this::toDomain);</span>
+    }
+
+    @Override
+    public List&lt;BinIssuer&gt; findAll() {
+<span class="nc" id="L23">        return jpaRepository.findAll()</span>
+<span class="nc" id="L24">                .stream()</span>
+<span class="nc" id="L25">                .map(this::toDomain)</span>
+<span class="nc" id="L26">                .toList();</span>
+    }
+
+    @Override
+    public BinIssuer save(BinIssuer binIssuer) {
+<span class="nc" id="L31">        return toDomain(jpaRepository.</span>
+<span class="nc" id="L32">                save(new BinIssuerEntity(binIssuer.bin(), binIssuer.issuerId())));</span>
+    }
+
+    @Override
+    public void deleteByBin(String bin) {
+<span class="nc" id="L37">        jpaRepository.deleteById(bin);</span>
+<span class="nc" id="L38">    }</span>
+
+    @Override
+    public boolean existsByBin(String bin) {
+<span class="nc" id="L42">        return jpaRepository.existsById(bin);</span>
+    }
+
+    private BinIssuer toDomain(BinIssuerEntity entity) {
+<span class="nc" id="L46">        return new BinIssuer(entity.getBin(), entity.getIssuerId());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

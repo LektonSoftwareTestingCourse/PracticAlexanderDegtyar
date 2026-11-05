@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CardOutboxEventDataEntity_.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">card-management</a> &gt; <a href="index.source.html" class="el_package">com.processing.cardmanagement.models</a> &gt; <span class="el_source">CardOutboxEventDataEntity_.java</span></div><h1>CardOutboxEventDataEntity_.java</h1><pre class="source lang-java linenums">package com.processing.cardmanagement.models;
+
+import jakarta.annotation.Generated;
+import jakarta.persistence.metamodel.EntityType;
+import jakarta.persistence.metamodel.SingularAttribute;
+import jakarta.persistence.metamodel.StaticMetamodel;
+import java.time.Instant;
+import java.util.UUID;
+
+@StaticMetamodel(CardOutboxEventDataEntity.class)
+@Generated(&quot;org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor&quot;)
+<span class="nc" id="L12">public abstract class CardOutboxEventDataEntity_ {</span>
+
+	
+	/**
+	 * @see com.processing.cardmanagement.models.CardOutboxEventDataEntity#createdAt
+	 **/
+	public static volatile SingularAttribute&lt;CardOutboxEventDataEntity, Instant&gt; createdAt;
+	
+	/**
+	 * @see com.processing.cardmanagement.models.CardOutboxEventDataEntity#lastError
+	 **/
+	public static volatile SingularAttribute&lt;CardOutboxEventDataEntity, String&gt; lastError;
+	
+	/**
+	 * @see com.processing.cardmanagement.models.CardOutboxEventDataEntity#payload
+	 **/
+	public static volatile SingularAttribute&lt;CardOutboxEventDataEntity, String&gt; payload;
+	
+	/**
+	 * @see com.processing.cardmanagement.models.CardOutboxEventDataEntity#retryCount
+	 **/
+	public static volatile SingularAttribute&lt;CardOutboxEventDataEntity, Integer&gt; retryCount;
+	
+	/**
+	 * @see com.processing.cardmanagement.models.CardOutboxEventDataEntity#processedAt
+	 **/
+	public static volatile SingularAttribute&lt;CardOutboxEventDataEntity, Instant&gt; processedAt;
+	
+	/**
+	 * @see com.processing.cardmanagement.models.CardOutboxEventDataEntity#id
+	 **/
+	public static volatile SingularAttribute&lt;CardOutboxEventDataEntity, UUID&gt; id;
+	
+	/**
+	 * @see com.processing.cardmanagement.models.CardOutboxEventDataEntity#eventType
+	 **/
+	public static volatile SingularAttribute&lt;CardOutboxEventDataEntity, String&gt; eventType;
+	
+	/**
+	 * @see com.processing.cardmanagement.models.CardOutboxEventDataEntity
+	 **/
+	public static volatile EntityType&lt;CardOutboxEventDataEntity&gt; class_;
+	
+	/**
+	 * @see com.processing.cardmanagement.models.CardOutboxEventDataEntity#status
+	 **/
+	public static volatile SingularAttribute&lt;CardOutboxEventDataEntity, OutboxEventDataStatus&gt; status;
+
+	public static final String CREATED_AT = &quot;createdAt&quot;;
+	public static final String LAST_ERROR = &quot;lastError&quot;;
+	public static final String PAYLOAD = &quot;payload&quot;;
+	public static final String RETRY_COUNT = &quot;retryCount&quot;;
+	public static final String PROCESSED_AT = &quot;processedAt&quot;;
+	public static final String ID = &quot;id&quot;;
+	public static final String EVENT_TYPE = &quot;eventType&quot;;
+	public static final String STATUS = &quot;status&quot;;
+
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

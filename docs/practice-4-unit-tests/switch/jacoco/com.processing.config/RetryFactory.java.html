@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RetryFactory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">switch</a> &gt; <a href="index.source.html" class="el_package">com.processing.config</a> &gt; <span class="el_source">RetryFactory.java</span></div><h1>RetryFactory.java</h1><pre class="source lang-java linenums">package com.processing.config;
+
+import io.github.resilience4j.core.IntervalFunction;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.List;
+
+/**
+ * Фабрика экземпляров Resilience4j {@link Retry} для Authorization и Logger.
+ */
+public final class RetryFactory {
+
+    private static final long MIN_INTERVAL_MS = 1;
+
+<span class="fc" id="L18">    private static final Logger LOG = LoggerFactory.getLogger(RetryFactory.class);</span>
+
+    private RetryFactory() {
+    }
+
+    /**
+     * Создаёт retry-политику для вызовов Transaction Logger.
+     *
+     * @param properties конфигурация Switch
+     * @return настроенный {@link Retry} с именем {@code &quot;logger&quot;}
+     */
+    public static Retry loggerRetry(SwitchProperties properties) {
+<span class="fc" id="L30">        return createRetry(&quot;logger&quot;, properties);</span>
+    }
+
+    /**
+     * Создаёт retry-политику для вызовов Authorization Service.
+     *
+     * @param properties конфигурация Switch
+     * @return настроенный {@link Retry} с именем {@code &quot;authorization&quot;}
+     */
+    public static Retry authorizationRetry(SwitchProperties properties) {
+<span class="fc" id="L40">        return createRetry(&quot;authorization&quot;, properties);</span>
+    }
+
+    /**
+     * Собирает {@link Retry} с exponential backoff из конфигурации.
+     *
+     * @param name       имя retry для логирования
+     * @param properties конфигурация Switch
+     * @return экземпляр {@link Retry}
+     */
+    private static Retry createRetry(String name, SwitchProperties properties) {
+<span class="fc" id="L51">        SwitchProperties.RetryProperties retry = properties.retry();</span>
+<span class="fc" id="L52">        IntervalFunction intervalFunction = intervalFunction(retry);</span>
+
+<span class="fc" id="L54">        RetryConfig config = RetryConfig.custom()</span>
+<span class="fc" id="L55">                .maxAttempts(retry.maxAttempts())</span>
+<span class="fc" id="L56">                .intervalFunction(intervalFunction)</span>
+<span class="fc" id="L57">                .failAfterMaxAttempts(true)</span>
+<span class="fc" id="L58">                .build();</span>
+
+<span class="fc" id="L60">        Retry retryInstance = Retry.of(name, config);</span>
+<span class="fc" id="L61">        int maxAttempts = retry.maxAttempts();</span>
+<span class="fc" id="L62">        retryInstance.getEventPublisher()</span>
+<span class="fc" id="L63">                .onRetry(event -&gt; LOG.warn(</span>
+                        &quot;{} attempt {}/{} failed&quot;,
+                        name,
+<span class="fc" id="L66">                        event.getNumberOfRetryAttempts(),</span>
+<span class="fc" id="L67">                        maxAttempts,</span>
+<span class="fc" id="L68">                        event.getLastThrowable()))</span>
+<span class="fc" id="L69">                .onError(event -&gt; LOG.error(</span>
+                        &quot;{} unavailable after {} attempts&quot;,
+                        name,
+<span class="fc" id="L72">                        maxAttempts,</span>
+<span class="fc" id="L73">                        event.getLastThrowable()));</span>
+
+<span class="fc" id="L75">        return retryInstance;</span>
+    }
+
+    /**
+     * Строит функцию интервала между попытками из списка {@code backoffMs}.
+     * Resilience4j передаёт {@code numberOfFailedAttempts} (1 после первой ошибки),
+     * поэтому для списка {@code [1000, 2000, 4000]} паузы: 1s → 2s → 4s.
+     *
+     * @param retry настройки retry
+     * @return функция задержки; при пустом списке — минимальный интервал 1 мс
+     */
+    private static IntervalFunction intervalFunction(SwitchProperties.RetryProperties retry) {
+<span class="fc" id="L87">        List&lt;Long&gt; backoffMs = retry.backoffMs();</span>
+<span class="fc bfc" id="L88" title="All 4 branches covered.">        if (backoffMs == null || backoffMs.isEmpty()) {</span>
+<span class="fc" id="L89">            return IntervalFunction.of(MIN_INTERVAL_MS);</span>
+        }
+<span class="fc" id="L91">        return failedAttempts -&gt; Math.max(</span>
+                MIN_INTERVAL_MS,
+<span class="fc" id="L93">                backoffMs.get(Math.min(Math.max(failedAttempts, 1) - 1, backoffMs.size() - 1)));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

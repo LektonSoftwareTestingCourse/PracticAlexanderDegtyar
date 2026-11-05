@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BinLookupClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">authorization</a> &gt; <a href="index.source.html" class="el_package">com.processing.authorization.client</a> &gt; <span class="el_source">BinLookupClient.java</span></div><h1>BinLookupClient.java</h1><pre class="source lang-java linenums">package com.processing.authorization.client;
+
+import com.processing.authorization.dto.BinLookupResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+
+import java.util.Optional;
+
+/**
+ * Client for the external BIN Lookup service.
+ *
+ * &lt;p&gt;Resolves a card BIN (first 6 digits of PAN) to an issuer ID
+ * via a synchronous HTTP call. On any failure (timeout, 404, 500),
+ * returns {@link Optional#empty()} to allow graceful degradation.
+ */
+@Component
+public class BinLookupClient {
+
+<span class="fc" id="L23">    private static final Logger LOG = LoggerFactory.getLogger(BinLookupClient.class);</span>
+
+    private final RestClient restClient;
+    private final String binLookupUrl;
+
+    /**
+     * Constructs the client with configured timeouts.
+     *
+     * @param binLookupUrl   base URL of the bin-lookup service
+     * @param connectTimeout connection timeout in milliseconds
+     * @param readTimeout    read timeout in milliseconds
+     */
+    public BinLookupClient(
+            @Value(&quot;${bin-lookup.url}&quot;) String binLookupUrl,
+            @Value(&quot;${bin-lookup.connect-timeout-ms:3000}&quot;) int connectTimeout,
+<span class="nc" id="L38">            @Value(&quot;${bin-lookup.read-timeout-ms:5000}&quot;) int readTimeout) {</span>
+<span class="nc" id="L39">        this.binLookupUrl = binLookupUrl;</span>
+<span class="nc" id="L40">        this.restClient = RestClient.builder()</span>
+<span class="nc" id="L41">                .requestFactory(clientHttpRequestFactory(connectTimeout, readTimeout))</span>
+<span class="nc" id="L42">                .build();</span>
+<span class="nc" id="L43">    }</span>
+
+    /**
+     * Resolves the issuer ID for a given PAN by extracting the BIN (first 6 digits).
+     *
+     * @param pan full card number (at least 6 digits)
+     * @return issuer ID if resolution succeeded, {@link Optional#empty()} otherwise
+     */
+    public Optional&lt;String&gt; getIssuerId(String pan) {
+<span class="nc bnc" id="L52" title="All 4 branches missed.">        if (pan == null || pan.length() &lt; 6) {</span>
+<span class="nc" id="L53">            LOG.warn(&quot;Bin lookup skipped: PAN too short&quot;);</span>
+<span class="nc" id="L54">            return Optional.empty();</span>
+        }
+<span class="nc" id="L56">        String bin = pan.substring(0, 6);</span>
+        try {
+<span class="nc" id="L58">            BinLookupResponse response = restClient.get()</span>
+<span class="nc" id="L59">                    .uri(binLookupUrl + &quot;/api/bin/{bin}&quot;, bin)</span>
+<span class="nc" id="L60">                    .retrieve()</span>
+<span class="nc" id="L61">                    .body(BinLookupResponse.class);</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">            String issuerId = response != null ? response.issuerId() : null;</span>
+<span class="nc" id="L63">            LOG.debug(&quot;Bin lookup OK: bin={} -&gt; issuerId={}&quot;, bin, issuerId);</span>
+<span class="nc" id="L64">            return Optional.ofNullable(issuerId);</span>
+<span class="nc" id="L65">        } catch (Exception e) {</span>
+<span class="nc" id="L66">            LOG.warn(&quot;Bin lookup failed for bin={}: {}&quot;, bin, e.getMessage());</span>
+<span class="nc" id="L67">            return Optional.empty();</span>
+        }
+    }
+
+    private static SimpleClientHttpRequestFactory clientHttpRequestFactory(
+            int connectTimeout, int readTimeout) {
+<span class="nc" id="L73">        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();</span>
+<span class="nc" id="L74">        factory.setConnectTimeout(connectTimeout);</span>
+<span class="nc" id="L75">        factory.setReadTimeout(readTimeout);</span>
+<span class="nc" id="L76">        return factory;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

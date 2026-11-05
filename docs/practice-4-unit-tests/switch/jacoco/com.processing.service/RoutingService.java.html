@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RoutingService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">switch</a> &gt; <a href="index.source.html" class="el_package">com.processing.service</a> &gt; <span class="el_source">RoutingService.java</span></div><h1>RoutingService.java</h1><pre class="source lang-java linenums">package com.processing.service;
+
+import com.processing.config.SwitchProperties;
+import com.processing.exception.UnknownBinException;
+import org.springframework.stereotype.Service;
+import java.util.Map;
+
+/**
+ * Определяет {@code issuerId} эмитента по BIN (первые 6 цифр PAN).
+ */
+@Service
+public class RoutingService {
+
+    private final Map&lt;String, String&gt; binTable;
+
+    /**
+     * @param switchProperties конфигурация с таблицей BIN → issuerId
+     */
+<span class="fc" id="L19">    public RoutingService(SwitchProperties switchProperties) {</span>
+<span class="fc" id="L20">        this.binTable = Map.copyOf(switchProperties.binRouting());</span>
+<span class="fc" id="L21">    }</span>
+
+    /**
+     * Возвращает идентификатор эмитента для заданного PAN.
+     *
+     * @param pan номер карты (минимум 6 цифр)
+     * @return issuerId из таблицы маршрутизации
+     * @throws UnknownBinException если PAN короче 6 символов или BIN не найден
+     */
+    public String getIssuerIdByPan(String pan) {
+<span class="fc bfc" id="L31" title="All 4 branches covered.">        if (pan == null || pan.length() &lt; 6) {</span>
+<span class="fc" id="L32">            throw new UnknownBinException(&quot;null-or-short&quot;);</span>
+        }
+<span class="fc" id="L34">        String bin = pan.substring(0, 6);</span>
+<span class="fc" id="L35">        String issuerId = binTable.get(bin);</span>
+<span class="fc bfc" id="L36" title="All 2 branches covered.">        if (issuerId == null) {</span>
+<span class="fc" id="L37">            throw new UnknownBinException(bin);</span>
+        }
+<span class="fc" id="L39">        return issuerId;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

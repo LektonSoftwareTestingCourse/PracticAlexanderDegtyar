@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ResponseLoggingDecorator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gateway</a> &gt; <a href="index.source.html" class="el_package">com.processing.gateway.logging</a> &gt; <span class="el_source">ResponseLoggingDecorator.java</span></div><h1>ResponseLoggingDecorator.java</h1><pre class="source lang-java linenums">package com.processing.gateway.logging;
+
+import com.processing.gateway.logging.models.RequestLog;
+import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
+import org.reactivestreams.Publisher;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.http.server.reactive.ServerHttpResponseDecorator;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import java.nio.charset.StandardCharsets;
+
+<span class="nc" id="L16">@Slf4j</span>
+public class ResponseLoggingDecorator extends ServerHttpResponseDecorator {
+    private final RequestLog.RequestLogBuilder logBuilder;
+    private final LogDataMasker dataMasker;
+
+    public ResponseLoggingDecorator(ServerHttpResponse delegate,
+                                    RequestLog.RequestLogBuilder logBuilder, LogDataMasker dataMasker) {
+<span class="nc" id="L23">        super(delegate);</span>
+<span class="nc" id="L24">        this.logBuilder = logBuilder;</span>
+<span class="nc" id="L25">        this.dataMasker = dataMasker;</span>
+<span class="nc" id="L26">    }</span>
+
+    @Override
+    public Mono&lt;Void&gt; writeWith(@NonNull Publisher&lt;? extends DataBuffer&gt; body) {
+<span class="nc bnc" id="L30" title="All 2 branches missed.">        if (body instanceof Flux&lt;? extends DataBuffer&gt; fluxBody) {</span>
+<span class="nc" id="L31">            return super.writeWith(fluxBody.buffer().map(dataBuffers -&gt; {</span>
+<span class="nc" id="L32">                DataBuffer joinedBuffers = bufferFactory().join(dataBuffers);</span>
+<span class="nc" id="L33">                var content = new byte[joinedBuffers.readableByteCount()];</span>
+<span class="nc" id="L34">                joinedBuffers.read(content);</span>
+
+<span class="nc" id="L36">                DataBufferUtils.release(joinedBuffers);</span>
+
+<span class="nc" id="L38">                String responseBody = new String(content, StandardCharsets.UTF_8);</span>
+<span class="nc" id="L39">                String maskedResponseBody = dataMasker.maskData(responseBody);</span>
+
+<span class="nc" id="L41">                logBuilder.responseBody(maskedResponseBody);</span>
+
+<span class="nc" id="L43">                return bufferFactory().wrap(content);</span>
+<span class="nc" id="L44">            }).doOnError(e -&gt;</span>
+<span class="nc" id="L45">                    log.error(&quot;Error reading response body in logging decorator&quot;, e)));</span>
+        }
+
+<span class="nc" id="L48">        return super.writeWith(body);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

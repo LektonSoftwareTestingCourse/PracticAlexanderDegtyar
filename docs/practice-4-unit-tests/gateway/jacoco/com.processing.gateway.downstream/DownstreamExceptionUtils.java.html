@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DownstreamExceptionUtils.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gateway</a> &gt; <a href="index.source.html" class="el_package">com.processing.gateway.downstream</a> &gt; <span class="el_source">DownstreamExceptionUtils.java</span></div><h1>DownstreamExceptionUtils.java</h1><pre class="source lang-java linenums">package com.processing.gateway.downstream;
+
+import org.springframework.web.client.ResourceAccessException;
+import reactor.netty.http.client.PrematureCloseException;
+
+import java.io.IOException;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.net.http.HttpConnectTimeoutException;
+import java.net.http.HttpTimeoutException;
+
+public final class DownstreamExceptionUtils {
+
+    private DownstreamExceptionUtils() {
+    }
+
+    public static boolean isDownstreamUnavailable(Throwable throwable) {
+<span class="fc" id="L18">        Throwable current = throwable;</span>
+
+<span class="fc bfc" id="L20" title="All 2 branches covered.">        while (current != null) {</span>
+<span class="pc bpc" id="L21" title="1 of 12 branches missed.">            if (current instanceof ResourceAccessException</span>
+                    || current instanceof ConnectException
+                    || current instanceof SocketTimeoutException
+                    || current instanceof HttpTimeoutException
+                    || current instanceof HttpConnectTimeoutException
+                    || current instanceof PrematureCloseException) {
+<span class="fc" id="L27">                return true;</span>
+            }
+
+<span class="fc" id="L30">            current = current.getCause();</span>
+        }
+
+<span class="fc" id="L33">        return false;</span>
+    }
+
+    public static void rethrow(Exception exception) throws IOException {
+<span class="fc bfc" id="L37" title="All 2 branches covered.">        if (exception instanceof IOException ioException) {</span>
+<span class="fc" id="L38">            throw ioException;</span>
+        }
+<span class="fc bfc" id="L40" title="All 2 branches covered.">        if (exception instanceof RuntimeException runtimeException) {</span>
+<span class="fc" id="L41">            throw runtimeException;</span>
+        }
+
+<span class="fc" id="L44">        throw new IOException(exception);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

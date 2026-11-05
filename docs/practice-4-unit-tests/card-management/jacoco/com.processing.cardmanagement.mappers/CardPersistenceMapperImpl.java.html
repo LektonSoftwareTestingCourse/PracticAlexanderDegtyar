@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CardPersistenceMapperImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">card-management</a> &gt; <a href="index.source.html" class="el_package">com.processing.cardmanagement.mappers</a> &gt; <span class="el_source">CardPersistenceMapperImpl.java</span></div><h1>CardPersistenceMapperImpl.java</h1><pre class="source lang-java linenums">package com.processing.cardmanagement.mappers;
+
+import com.processing.cardmanagement.models.Card;
+import com.processing.cardmanagement.models.CardEntity;
+import com.processing.cardmanagement.models.CardStatus;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.YearMonth;
+import java.util.UUID;
+import javax.annotation.processing.Generated;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+@Generated(
+    value = &quot;org.mapstruct.ap.MappingProcessor&quot;,
+    date = &quot;2026-11-05T12:17:58+0300&quot;,
+    comments = &quot;version: 1.6.3, compiler: javac, environment: Java 21.0.3 (Oracle Corporation)&quot;
+)
+@Component
+<span class="nc" id="L20">public class CardPersistenceMapperImpl implements CardPersistenceMapper {</span>
+
+    @Autowired
+    private CardExpiryDateMapper cardExpiryDateMapper;
+
+    @Override
+    public CardEntity toEntity(Card card) {
+<span class="nc bnc" id="L27" title="All 2 branches missed.">        if ( card == null ) {</span>
+<span class="nc" id="L28">            return null;</span>
+        }
+
+<span class="nc" id="L31">        CardEntity cardEntity = new CardEntity();</span>
+
+<span class="nc" id="L33">        cardEntity.setId( card.id() );</span>
+<span class="nc" id="L34">        cardEntity.setPan( card.pan() );</span>
+<span class="nc" id="L35">        cardEntity.setBin( card.bin() );</span>
+<span class="nc" id="L36">        cardEntity.setCardholderName( card.cardholderName() );</span>
+<span class="nc" id="L37">        cardEntity.setExpiryDate( cardExpiryDateMapper.asString( card.expiryDate() ) );</span>
+<span class="nc bnc" id="L38" title="All 2 branches missed.">        if ( card.status() != null ) {</span>
+<span class="nc" id="L39">            cardEntity.setStatus( card.status().name() );</span>
+        }
+<span class="nc" id="L41">        cardEntity.setCurrencyCode( card.currencyCode() );</span>
+<span class="nc" id="L42">        cardEntity.setDailyLimit( card.dailyLimit() );</span>
+<span class="nc" id="L43">        cardEntity.setMonthlyLimit( card.monthlyLimit() );</span>
+<span class="nc" id="L44">        cardEntity.setAvailableBalance( card.availableBalance() );</span>
+<span class="nc" id="L45">        cardEntity.setIssuerId( card.issuerId() );</span>
+<span class="nc" id="L46">        cardEntity.setCreatedAt( card.createdAt() );</span>
+
+<span class="nc" id="L48">        return cardEntity;</span>
+    }
+
+    @Override
+    public Card toDomain(CardEntity entity) {
+<span class="nc bnc" id="L53" title="All 2 branches missed.">        if ( entity == null ) {</span>
+<span class="nc" id="L54">            return null;</span>
+        }
+
+<span class="nc" id="L57">        UUID id = null;</span>
+<span class="nc" id="L58">        String pan = null;</span>
+<span class="nc" id="L59">        String bin = null;</span>
+<span class="nc" id="L60">        String cardholderName = null;</span>
+<span class="nc" id="L61">        YearMonth expiryDate = null;</span>
+<span class="nc" id="L62">        CardStatus status = null;</span>
+<span class="nc" id="L63">        String currencyCode = null;</span>
+<span class="nc" id="L64">        BigDecimal dailyLimit = null;</span>
+<span class="nc" id="L65">        BigDecimal monthlyLimit = null;</span>
+<span class="nc" id="L66">        BigDecimal availableBalance = null;</span>
+<span class="nc" id="L67">        String issuerId = null;</span>
+<span class="nc" id="L68">        Instant createdAt = null;</span>
+
+<span class="nc" id="L70">        id = entity.getId();</span>
+<span class="nc" id="L71">        pan = entity.getPan();</span>
+<span class="nc" id="L72">        bin = entity.getBin();</span>
+<span class="nc" id="L73">        cardholderName = entity.getCardholderName();</span>
+<span class="nc" id="L74">        expiryDate = cardExpiryDateMapper.asYearMonth( entity.getExpiryDate() );</span>
+<span class="nc bnc" id="L75" title="All 2 branches missed.">        if ( entity.getStatus() != null ) {</span>
+<span class="nc" id="L76">            status = Enum.valueOf( CardStatus.class, entity.getStatus() );</span>
+        }
+<span class="nc" id="L78">        currencyCode = entity.getCurrencyCode();</span>
+<span class="nc" id="L79">        dailyLimit = entity.getDailyLimit();</span>
+<span class="nc" id="L80">        monthlyLimit = entity.getMonthlyLimit();</span>
+<span class="nc" id="L81">        availableBalance = entity.getAvailableBalance();</span>
+<span class="nc" id="L82">        issuerId = entity.getIssuerId();</span>
+<span class="nc" id="L83">        createdAt = entity.getCreatedAt();</span>
+
+<span class="nc" id="L85">        Card card = new Card( id, pan, bin, cardholderName, expiryDate, status, currencyCode, dailyLimit, monthlyLimit, availableBalance, issuerId, createdAt );</span>
+
+<span class="nc" id="L87">        return card;</span>
+    }
+
+    @Override
+    public void updateEntityFromDomain(Card card, CardEntity entity) {
+<span class="nc bnc" id="L92" title="All 2 branches missed.">        if ( card == null ) {</span>
+<span class="nc" id="L93">            return;</span>
+        }
+
+<span class="nc" id="L96">        entity.setPan( card.pan() );</span>
+<span class="nc" id="L97">        entity.setBin( card.bin() );</span>
+<span class="nc" id="L98">        entity.setCardholderName( card.cardholderName() );</span>
+<span class="nc" id="L99">        entity.setExpiryDate( cardExpiryDateMapper.asString( card.expiryDate() ) );</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">        if ( card.status() != null ) {</span>
+<span class="nc" id="L101">            entity.setStatus( card.status().name() );</span>
+        }
+        else {
+<span class="nc" id="L104">            entity.setStatus( null );</span>
+        }
+<span class="nc" id="L106">        entity.setCurrencyCode( card.currencyCode() );</span>
+<span class="nc" id="L107">        entity.setDailyLimit( card.dailyLimit() );</span>
+<span class="nc" id="L108">        entity.setMonthlyLimit( card.monthlyLimit() );</span>
+<span class="nc" id="L109">        entity.setAvailableBalance( card.availableBalance() );</span>
+<span class="nc" id="L110">        entity.setIssuerId( card.issuerId() );</span>
+<span class="nc" id="L111">        entity.setCreatedAt( card.createdAt() );</span>
+<span class="nc" id="L112">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TransactionRateLimitFilter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gateway</a> &gt; <a href="index.source.html" class="el_package">com.processing.gateway.ratelimit</a> &gt; <span class="el_source">TransactionRateLimitFilter.java</span></div><h1>TransactionRateLimitFilter.java</h1><pre class="source lang-java linenums">package com.processing.gateway.ratelimit;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.processing.gateway.metrics.GatewayMetrics;
+import lombok.RequiredArgsConstructor;
+import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.core.Ordered;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
+
+import java.io.IOException;
+import java.util.Map;
+
+/**
+ * Applies the configured per-second in-memory limit to transaction requests.
+ */
+@Component
+@RequiredArgsConstructor
+public class TransactionRateLimitFilter implements GlobalFilter, Ordered {
+
+    private static final String TRANSACTIONS_PATH = &quot;/api/transactions&quot;;
+    private static final String RATE_LIMIT_KEY_PREFIX = &quot;POST &quot; + TRANSACTIONS_PATH + &quot;:&quot;;
+
+    private final InMemoryRateLimiter rateLimiter;
+    private final ClientIpResolver clientIpResolver;
+    private final ObjectMapper objectMapper;
+    private final GatewayMetrics gatewayMetrics;
+
+    @Override
+    public int getOrder() {
+<span class="nc" id="L37">        return Ordered.HIGHEST_PRECEDENCE + 1;</span>
+    }
+
+    @Override
+    public Mono&lt;Void&gt; filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+<span class="fc" id="L42">        String clientIp = clientIpResolver.resolve(exchange);</span>
+<span class="fc" id="L43">        String rateLimitKey = RATE_LIMIT_KEY_PREFIX + clientIp;</span>
+
+<span class="fc bfc" id="L45" title="All 2 branches covered.">        if (!isTransactionRequest(exchange)</span>
+<span class="fc bfc" id="L46" title="All 2 branches covered.">                || rateLimiter.allowRequest(rateLimitKey)) {</span>
+<span class="fc" id="L47">            return chain.filter(exchange);</span>
+        }
+
+<span class="fc" id="L50">        gatewayMetrics.recordRateLimitRejected();</span>
+
+<span class="fc" id="L52">        var response = exchange.getResponse();</span>
+<span class="fc" id="L53">        response.setStatusCode(HttpStatus.TOO_MANY_REQUESTS);</span>
+<span class="fc" id="L54">        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);</span>
+<span class="fc" id="L55">        response.getHeaders().set(HttpHeaders.RETRY_AFTER, &quot;1&quot;);</span>
+
+<span class="fc" id="L57">        return writeJson(exchange, Map.of(</span>
+                &quot;error&quot;, &quot;RATE_LIMIT_EXCEEDED&quot;,
+                &quot;message&quot;, &quot;Too many requests. Try again later.&quot;,
+<span class="fc" id="L60">                &quot;retryAfterMs&quot;, 1000</span>
+        ));
+    }
+
+    private boolean isTransactionRequest(ServerWebExchange exchange) {
+<span class="fc bfc" id="L65" title="All 2 branches covered.">        return HttpMethod.POST.equals(exchange.getRequest().getMethod())</span>
+<span class="fc bfc" id="L66" title="All 2 branches covered.">                &amp;&amp; TRANSACTIONS_PATH.equals(exchange.getRequest().getPath().value());</span>
+    }
+
+    private Mono&lt;Void&gt; writeJson(ServerWebExchange exchange, Object body) {
+        try {
+<span class="fc" id="L71">            byte[] bytes = objectMapper.writeValueAsBytes(body);</span>
+<span class="fc" id="L72">            var buffer = exchange.getResponse().bufferFactory().wrap(bytes);</span>
+<span class="fc" id="L73">            return exchange.getResponse().writeWith(Mono.just(buffer));</span>
+<span class="nc" id="L74">        } catch (IOException e) {</span>
+<span class="nc" id="L75">            return Mono.error(e);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

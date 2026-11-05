@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SwitchProperties.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">switch</a> &gt; <a href="index.source.html" class="el_package">com.processing.config</a> &gt; <span class="el_source">SwitchProperties.java</span></div><h1>SwitchProperties.java</h1><pre class="source lang-java linenums">package com.processing.config;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Конфигурация Switch из {@code application.yml} (префикс {@code switch}).
+ *
+ * @param version              версия сервиса для health-check
+ * @param binRouting           таблица BIN → issuerId
+ * @param authorizationUrl     базовый URL Authorization Service
+ * @param loggerUrl            базовый URL Transaction Logger
+ * @param merchantAcquirerUrl  базовый URL Merchant Acquirer Simulator
+ * @param http                 таймауты HTTP-клиентов
+ * @param retry                настройки Resilience4j retry
+ * @param circuitBreaker       настройки Resilience4j circuit breaker
+ */
+@ConfigurationProperties(prefix = &quot;switch&quot;)
+<span class="fc" id="L20">public record SwitchProperties(</span>
+        String version,
+        Map&lt;String, String&gt; binRouting,
+        String authorizationUrl,
+        String loggerUrl,
+        String merchantAcquirerUrl,
+        HttpProperties http,
+        RetryProperties retry,
+        CircuitBreakerSection circuitBreaker
+) {
+    /**
+     * Таймауты подключения и чтения для REST-клиентов.
+     *
+     * @param connectTimeoutMs   таймаут установки соединения (мс)
+     * @param authReadTimeoutMs  таймаут чтения ответа Authorization (мс)
+     * @param loggerReadTimeoutMs таймаут чтения ответа Logger (мс)
+     */
+<span class="fc" id="L37">    public record HttpProperties(</span>
+            int connectTimeoutMs,
+            int authReadTimeoutMs,
+            int loggerReadTimeoutMs
+    ) {}
+
+    /**
+     * Параметры повторных попыток при сбоях downstream-сервисов.
+     *
+     * @param maxAttempts максимальное число попыток
+     * @param backoffMs   интервалы между попытками (мс), exponential backoff
+     */
+<span class="fc" id="L49">    public record RetryProperties(</span>
+            int maxAttempts,
+            List&lt;Long&gt; backoffMs
+    ) {}
+
+    /**
+     * Секция circuit breaker в конфигурации Switch.
+     *
+     * @param authorization параметры CB для Authorization Service
+     */
+<span class="fc" id="L59">    public record CircuitBreakerSection(</span>
+            CircuitBreakerProperties authorization
+    ) {}
+
+    /**
+     * Параметры circuit breaker для вызовов Authorization.
+     *
+     * @param failureRateThreshold       порог ошибок (%), при котором контур открывается
+     * @param slidingWindowSize          размер скользящего окна вызовов
+     * @param minimumNumberOfCalls       минимум вызовов перед расчётом failure rate
+     * @param waitDurationInOpenStateMs  время в OPEN-состоянии (мс)
+     */
+<span class="fc" id="L71">    public record CircuitBreakerProperties(</span>
+            int failureRateThreshold,
+            int slidingWindowSize,
+            int minimumNumberOfCalls,
+            long waitDurationInOpenStateMs
+    ) {}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReservationEntity_.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">card-management</a> &gt; <a href="index.source.html" class="el_package">com.processing.cardmanagement.models</a> &gt; <span class="el_source">ReservationEntity_.java</span></div><h1>ReservationEntity_.java</h1><pre class="source lang-java linenums">package com.processing.cardmanagement.models;
+
+import jakarta.annotation.Generated;
+import jakarta.persistence.metamodel.EntityType;
+import jakarta.persistence.metamodel.SingularAttribute;
+import jakarta.persistence.metamodel.StaticMetamodel;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.UUID;
+
+@StaticMetamodel(ReservationEntity.class)
+@Generated(&quot;org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor&quot;)
+<span class="nc" id="L13">public abstract class ReservationEntity_ {</span>
+
+	
+	/**
+	 * @see com.processing.cardmanagement.models.ReservationEntity#createdAt
+	 **/
+	public static volatile SingularAttribute&lt;ReservationEntity, Instant&gt; createdAt;
+	
+	/**
+	 * @see com.processing.cardmanagement.models.ReservationEntity#reservationAmount
+	 **/
+	public static volatile SingularAttribute&lt;ReservationEntity, BigDecimal&gt; reservationAmount;
+	
+	/**
+	 * @see com.processing.cardmanagement.models.ReservationEntity#id
+	 **/
+	public static volatile SingularAttribute&lt;ReservationEntity, UUID&gt; id;
+	
+	/**
+	 * @see com.processing.cardmanagement.models.ReservationEntity#pan
+	 **/
+	public static volatile SingularAttribute&lt;ReservationEntity, String&gt; pan;
+	
+	/**
+	 * @see com.processing.cardmanagement.models.ReservationEntity
+	 **/
+	public static volatile EntityType&lt;ReservationEntity&gt; class_;
+	
+	/**
+	 * @see com.processing.cardmanagement.models.ReservationEntity#rrn
+	 **/
+	public static volatile SingularAttribute&lt;ReservationEntity, String&gt; rrn;
+	
+	/**
+	 * @see com.processing.cardmanagement.models.ReservationEntity#status
+	 **/
+	public static volatile SingularAttribute&lt;ReservationEntity, String&gt; status;
+	
+	/**
+	 * @see com.processing.cardmanagement.models.ReservationEntity#updatedAt
+	 **/
+	public static volatile SingularAttribute&lt;ReservationEntity, Instant&gt; updatedAt;
+
+	public static final String CREATED_AT = &quot;createdAt&quot;;
+	public static final String RESERVATION_AMOUNT = &quot;reservationAmount&quot;;
+	public static final String ID = &quot;id&quot;;
+	public static final String PAN = &quot;pan&quot;;
+	public static final String RRN = &quot;rrn&quot;;
+	public static final String STATUS = &quot;status&quot;;
+	public static final String UPDATED_AT = &quot;updatedAt&quot;;
+
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

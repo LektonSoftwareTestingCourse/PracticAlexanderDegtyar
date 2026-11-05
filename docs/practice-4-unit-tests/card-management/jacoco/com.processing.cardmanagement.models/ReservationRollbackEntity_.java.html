@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReservationRollbackEntity_.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">card-management</a> &gt; <a href="index.source.html" class="el_package">com.processing.cardmanagement.models</a> &gt; <span class="el_source">ReservationRollbackEntity_.java</span></div><h1>ReservationRollbackEntity_.java</h1><pre class="source lang-java linenums">package com.processing.cardmanagement.models;
+
+import jakarta.annotation.Generated;
+import jakarta.persistence.metamodel.EntityType;
+import jakarta.persistence.metamodel.SingularAttribute;
+import jakarta.persistence.metamodel.StaticMetamodel;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.UUID;
+
+@StaticMetamodel(ReservationRollbackEntity.class)
+@Generated(&quot;org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor&quot;)
+<span class="nc" id="L13">public abstract class ReservationRollbackEntity_ {</span>
+
+	
+	/**
+	 * @see com.processing.cardmanagement.models.ReservationRollbackEntity#createdAt
+	 **/
+	public static volatile SingularAttribute&lt;ReservationRollbackEntity, Instant&gt; createdAt;
+	
+	/**
+	 * @see com.processing.cardmanagement.models.ReservationRollbackEntity#rollbackAmount
+	 **/
+	public static volatile SingularAttribute&lt;ReservationRollbackEntity, BigDecimal&gt; rollbackAmount;
+	
+	/**
+	 * @see com.processing.cardmanagement.models.ReservationRollbackEntity#reservation
+	 **/
+	public static volatile SingularAttribute&lt;ReservationRollbackEntity, ReservationEntity&gt; reservation;
+	
+	/**
+	 * @see com.processing.cardmanagement.models.ReservationRollbackEntity#id
+	 **/
+	public static volatile SingularAttribute&lt;ReservationRollbackEntity, UUID&gt; id;
+	
+	/**
+	 * @see com.processing.cardmanagement.models.ReservationRollbackEntity#pan
+	 **/
+	public static volatile SingularAttribute&lt;ReservationRollbackEntity, String&gt; pan;
+	
+	/**
+	 * @see com.processing.cardmanagement.models.ReservationRollbackEntity
+	 **/
+	public static volatile EntityType&lt;ReservationRollbackEntity&gt; class_;
+	
+	/**
+	 * @see com.processing.cardmanagement.models.ReservationRollbackEntity#rrn
+	 **/
+	public static volatile SingularAttribute&lt;ReservationRollbackEntity, String&gt; rrn;
+
+	public static final String CREATED_AT = &quot;createdAt&quot;;
+	public static final String ROLLBACK_AMOUNT = &quot;rollbackAmount&quot;;
+	public static final String RESERVATION = &quot;reservation&quot;;
+	public static final String ID = &quot;id&quot;;
+	public static final String PAN = &quot;pan&quot;;
+	public static final String RRN = &quot;rrn&quot;;
+
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

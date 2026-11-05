@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InMemoryRateLimiter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gateway</a> &gt; <a href="index.source.html" class="el_package">com.processing.gateway.ratelimit</a> &gt; <span class="el_source">InMemoryRateLimiter.java</span></div><h1>InMemoryRateLimiter.java</h1><pre class="source lang-java linenums">package com.processing.gateway.ratelimit;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Ticker;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import java.time.Duration;
+
+/**
+ * Thread-safe token bucket rate limiter backed by a Caffeine cache.
+ */
+<span class="fc" id="L15">@Component</span>
+public class InMemoryRateLimiter {
+
+    private final int capacity;
+    private final double refillTokensPerSecond;
+    private final Ticker ticker;
+    private final Cache&lt;String, TokenBucket&gt; buckets;
+
+    /**
+     * Creates a token bucket rate limiter from gateway configuration.
+     *
+     * @param capacity maximum number of tokens stored in each bucket
+     * @param refillTokensPerSecond number of tokens refilled per second
+     * @param bucketExpireAfterAccess bucket time-to-live after last access
+     * @param maxBuckets maximum number of buckets kept in memory
+     */
+    @Autowired
+    public InMemoryRateLimiter(
+            @Value(&quot;${gateway.rate-limit.transactions.capacity:100}&quot;)
+            int capacity,
+            @Value(&quot;${gateway.rate-limit.transactions.refill-per-second:100}&quot;)
+            double refillTokensPerSecond,
+            @Value(&quot;${gateway.rate-limit.transactions.bucket-expire-after-access:10m}&quot;)
+            Duration bucketExpireAfterAccess,
+            @Value(&quot;${gateway.rate-limit.transactions.max-buckets:10000}&quot;)
+            long maxBuckets
+    ) {
+<span class="nc" id="L42">        this(capacity, refillTokensPerSecond, bucketExpireAfterAccess, maxBuckets, Ticker.systemTicker());</span>
+<span class="nc" id="L43">    }</span>
+
+    /**
+     * Creates a rate limiter with a custom ticker for unit tests.
+     *
+     * @param capacity maximum number of tokens stored in each bucket
+     * @param refillTokensPerSecond number of tokens refilled per second
+     * @param bucketExpireAfterAccess bucket time-to-live after last access
+     * @param maxBuckets maximum number of buckets kept in memory
+     * @param ticker ticker used by the token bucket and Caffeine cache
+     * @return configured rate limiter
+     */
+    public static InMemoryRateLimiter forTesting(int capacity,
+                                                 double refillTokensPerSecond,
+                                                 Duration bucketExpireAfterAccess,
+                                                 long maxBuckets,
+                                                 Ticker ticker) {
+<span class="fc" id="L60">        return new InMemoryRateLimiter(capacity, refillTokensPerSecond, bucketExpireAfterAccess, maxBuckets, ticker);</span>
+    }
+
+    InMemoryRateLimiter(int capacity,
+                        double refillTokensPerSecond,
+                        Duration bucketExpireAfterAccess,
+                        long maxBuckets,
+<span class="fc" id="L67">                        Ticker ticker) {</span>
+<span class="fc" id="L68">        this.capacity = Math.max(0, capacity);</span>
+<span class="fc" id="L69">        this.refillTokensPerSecond = Math.max(0, refillTokensPerSecond);</span>
+<span class="fc" id="L70">        this.ticker = ticker;</span>
+<span class="fc" id="L71">        this.buckets = Caffeine.newBuilder()</span>
+<span class="fc" id="L72">                .expireAfterAccess(bucketExpireAfterAccess)</span>
+<span class="fc" id="L73">                .maximumSize(maxBuckets)</span>
+<span class="fc" id="L74">                .ticker(ticker)</span>
+<span class="fc" id="L75">                .build();</span>
+<span class="fc" id="L76">    }</span>
+
+    /**
+     * Attempts to consume one token from a rate-limit bucket.
+     *
+     * @param key logical bucket key, for example {@code POST /api/transactions:127.0.0.1}
+     * @return {@code true} when the request is within the limit
+     */
+    public boolean allowRequest(String key) {
+<span class="fc" id="L85">        TokenBucket bucket = buckets.get(key, ignored -&gt; new TokenBucket(capacity, refillTokensPerSecond, ticker.read()));</span>
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">        assert bucket != null;</span>
+<span class="fc" id="L87">        return bucket.tryConsume(ticker.read());</span>
+    }
+
+    /**
+     * Triggers Caffeine maintenance for expired bucket cleanup.
+     */
+    public void cleanUp() {
+<span class="fc" id="L94">        buckets.cleanUp();</span>
+<span class="fc" id="L95">    }</span>
+
+    private static final class TokenBucket {
+        private final int capacity;
+        private final double refillTokensPerSecond;
+        private double tokens;
+        private long lastRefillNanos;
+
+<span class="fc" id="L103">        private TokenBucket(int capacity, double refillTokensPerSecond, long createdAtNanos) {</span>
+<span class="fc" id="L104">            this.capacity = capacity;</span>
+<span class="fc" id="L105">            this.refillTokensPerSecond = refillTokensPerSecond;</span>
+<span class="fc" id="L106">            this.tokens = capacity;</span>
+<span class="fc" id="L107">            this.lastRefillNanos = createdAtNanos;</span>
+<span class="fc" id="L108">        }</span>
+
+        private synchronized boolean tryConsume(long nowNanos) {
+<span class="fc" id="L111">            refill(nowNanos);</span>
+
+<span class="fc bfc" id="L113" title="All 2 branches covered.">            if (tokens &lt; 1) {</span>
+<span class="fc" id="L114">                return false;</span>
+            }
+
+<span class="fc" id="L117">            tokens -= 1;</span>
+<span class="fc" id="L118">            return true;</span>
+        }
+
+        private void refill(long nowNanos) {
+<span class="fc bfc" id="L122" title="All 2 branches covered.">            if (nowNanos &lt;= lastRefillNanos) {</span>
+<span class="fc" id="L123">                return;</span>
+            }
+
+<span class="fc" id="L126">            double elapsedSeconds = (nowNanos - lastRefillNanos) / 1_000_000_000.0;</span>
+<span class="fc" id="L127">            tokens = Math.min(capacity, tokens + elapsedSeconds * refillTokensPerSecond);</span>
+<span class="fc" id="L128">            lastRefillNanos = nowNanos;</span>
+<span class="fc" id="L129">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

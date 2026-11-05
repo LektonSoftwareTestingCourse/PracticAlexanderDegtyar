@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TransactionValidationFilter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gateway</a> &gt; <a href="index.source.html" class="el_package">com.processing.gateway.validation</a> &gt; <span class="el_source">TransactionValidationFilter.java</span></div><h1>TransactionValidationFilter.java</h1><pre class="source lang-java linenums">package com.processing.gateway.validation;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.processing.common.dto.ErrorResponse;
+import com.processing.common.dto.authorization.AuthorizationRequest;
+import com.processing.gateway.metrics.GatewayMetrics;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.core.Ordered;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
+import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import java.io.IOException;
+import java.time.Instant;
+
+/**
+ * Validates transaction authorization requests before they are proxied to Switch.
+ */
+@Component
+@RequiredArgsConstructor
+public class TransactionValidationFilter implements GlobalFilter, Ordered {
+
+    private static final String TRANSACTIONS_PATH = &quot;/api/transactions&quot;;
+
+    private final ObjectMapper objectMapper;
+    private final TransactionRequestValidator validator;
+    private final GatewayMetrics gatewayMetrics;
+
+    @Override
+    public int getOrder() {
+<span class="nc" id="L43">        return Ordered.HIGHEST_PRECEDENCE + 2;</span>
+    }
+
+    @Override
+    public Mono&lt;Void&gt; filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+<span class="fc bfc" id="L48" title="All 2 branches covered.">        if (!isTransactionRequest(exchange)) {</span>
+<span class="fc" id="L49">            return chain.filter(exchange);</span>
+        }
+
+<span class="fc" id="L52">        return DataBufferUtils.join(exchange.getRequest().getBody())</span>
+<span class="fc" id="L53">                .switchIfEmpty(Mono.fromSupplier(() -&gt; exchange.getResponse()</span>
+<span class="fc" id="L54">                        .bufferFactory()</span>
+<span class="fc" id="L55">                        .wrap(new byte[0])))</span>
+<span class="fc" id="L56">                .flatMap(dataBuffer -&gt; validateAndContinue(exchange, chain, dataBuffer));</span>
+    }
+
+    private Mono&lt;Void&gt; validateAndContinue(ServerWebExchange exchange,
+                                           GatewayFilterChain chain,
+                                           DataBuffer dataBuffer) {
+<span class="fc" id="L62">        byte[] requestBody = new byte[dataBuffer.readableByteCount()];</span>
+<span class="fc" id="L63">        dataBuffer.read(requestBody);</span>
+<span class="fc" id="L64">        DataBufferUtils.release(dataBuffer);</span>
+
+        try {
+<span class="fc" id="L67">            AuthorizationRequest authorizationRequest = objectMapper.readValue(requestBody, AuthorizationRequest.class);</span>
+<span class="fc" id="L68">            validator.validate(authorizationRequest);</span>
+<span class="fc" id="L69">        } catch (IOException e) {</span>
+<span class="fc" id="L70">            gatewayMetrics.recordValidationRejected(&quot;invalid_json&quot;);</span>
+<span class="fc" id="L71">            return writeValidationError(exchange, &quot;Request body must be valid JSON&quot;);</span>
+<span class="fc" id="L72">        } catch (TransactionValidationException e) {</span>
+<span class="fc" id="L73">            gatewayMetrics.recordValidationRejected(&quot;invalid_request&quot;);</span>
+<span class="fc" id="L74">            return writeValidationError(exchange, e.getMessage());</span>
+<span class="fc" id="L75">        }</span>
+
+<span class="fc" id="L77">        ServerHttpRequest decoratedRequest = decorateRequest(exchange, requestBody);</span>
+<span class="fc" id="L78">        return chain.filter(exchange.mutate().request(decoratedRequest).build());</span>
+    }
+
+    private boolean isTransactionRequest(ServerWebExchange exchange) {
+<span class="fc bfc" id="L82" title="All 2 branches covered.">        return HttpMethod.POST.equals(exchange.getRequest().getMethod())</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">                &amp;&amp; TRANSACTIONS_PATH.equals(exchange.getRequest().getPath().value());</span>
+    }
+
+    private ServerHttpRequest decorateRequest(ServerWebExchange exchange, byte[] requestBody) {
+<span class="fc" id="L87">        return new ServerHttpRequestDecorator(exchange.getRequest()) {</span>
+            @Override
+            @NonNull
+            public HttpHeaders getHeaders() {
+<span class="fc" id="L91">                HttpHeaders headers = new HttpHeaders();</span>
+<span class="fc" id="L92">                headers.putAll(super.getHeaders());</span>
+<span class="fc" id="L93">                headers.setContentLength(requestBody.length);</span>
+<span class="fc" id="L94">                return headers;</span>
+            }
+
+            @Override
+            @NonNull
+            public Flux&lt;DataBuffer&gt; getBody() {
+<span class="fc" id="L100">                return Flux.defer(() -&gt; {</span>
+<span class="fc" id="L101">                    DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(requestBody);</span>
+<span class="fc" id="L102">                    return Flux.just(buffer);</span>
+                });
+            }
+        };
+    }
+
+    private Mono&lt;Void&gt; writeValidationError(ServerWebExchange exchange, String message) {
+<span class="fc" id="L109">        var response = exchange.getResponse();</span>
+<span class="fc" id="L110">        response.setStatusCode(HttpStatus.BAD_REQUEST);</span>
+<span class="fc" id="L111">        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);</span>
+
+<span class="fc" id="L113">        return writeJson(exchange, new ErrorResponse(</span>
+                &quot;VALIDATION_ERROR&quot;,
+                message,
+<span class="fc" id="L116">                Instant.now(),</span>
+                &quot;gateway&quot;,
+                null
+        ));
+    }
+
+    private Mono&lt;Void&gt; writeJson(ServerWebExchange exchange, Object body) {
+        try {
+<span class="fc" id="L124">            byte[] bytes = objectMapper.writeValueAsBytes(body);</span>
+<span class="fc" id="L125">            DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);</span>
+<span class="fc" id="L126">            return exchange.getResponse().writeWith(Mono.just(buffer));</span>
+<span class="nc" id="L127">        } catch (IOException e) {</span>
+<span class="nc" id="L128">            return Mono.error(e);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

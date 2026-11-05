@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RequestLoggingFilter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gateway</a> &gt; <a href="index.source.html" class="el_package">com.processing.gateway.logging</a> &gt; <span class="el_source">RequestLoggingFilter.java</span></div><h1>RequestLoggingFilter.java</h1><pre class="source lang-java linenums">package com.processing.gateway.logging;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.processing.gateway.logging.models.RequestLog;
+import com.processing.gateway.properties.SmpGatewayProperties;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
+import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.core.Ordered;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.core.io.buffer.DefaultDataBufferFactory;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
+import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
+
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+
+/**
+ * Adds request correlation and writes a structured log record for every request.
+ *
+ * &lt;p&gt;If an incoming {@code X-Request-Id} header is present it is reused;
+ * otherwise a new UUID is generated and propagated to the response.&lt;/p&gt;
+ */
+@Component
+<span class="nc" id="L35">@Slf4j</span>
+public class RequestLoggingFilter implements GlobalFilter, Ordered {
+    private final ObjectMapper mapper;
+    private final SmpGatewayProperties properties;
+    private final LogDataMasker dataMasker;
+
+    private static final String ID_HEADER_NAME = &quot;X-Request-Id&quot;;
+    private static final String MDC_KEY = &quot;requestId&quot;;
+
+<span class="nc" id="L44">    public RequestLoggingFilter(ObjectMapper mapper, SmpGatewayProperties properties, LogDataMasker dataMasker) {</span>
+<span class="nc" id="L45">        this.properties = properties;</span>
+<span class="nc" id="L46">        this.mapper = mapper.copy()</span>
+<span class="nc" id="L47">                .setSerializationInclusion(JsonInclude.Include.NON_NULL);</span>
+<span class="nc" id="L48">        this.dataMasker = dataMasker;</span>
+
+<span class="nc bnc" id="L50" title="All 2 branches missed.">        if (properties.getLogging().getPretty()) {</span>
+<span class="nc" id="L51">            this.mapper.enable(SerializationFeature.INDENT_OUTPUT);</span>
+        }
+<span class="nc" id="L53">    }</span>
+
+    @Override
+    public Mono&lt;Void&gt; filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+<span class="nc bnc" id="L57" title="All 2 branches missed.">        if (properties.getLogging().getExcludedRoutes().contains(exchange.getRequest().getPath().value())) {</span>
+<span class="nc" id="L58">            return chain.filter(exchange);</span>
+        }
+
+<span class="nc" id="L61">        long startTime = System.currentTimeMillis();</span>
+
+<span class="nc" id="L63">        String incoming = exchange.getRequest().getHeaders().getFirst(ID_HEADER_NAME);</span>
+<span class="nc bnc" id="L64" title="All 4 branches missed.">        String requestId = (incoming != null &amp;&amp; !incoming.isBlank()) ? incoming : UUID.randomUUID().toString();</span>
+
+<span class="nc" id="L66">        var mutatedRequest = exchange.getRequest().mutate()</span>
+<span class="nc" id="L67">                .header(ID_HEADER_NAME, requestId)</span>
+<span class="nc" id="L68">                .build();</span>
+<span class="nc" id="L69">        exchange.getResponse().getHeaders().add(ID_HEADER_NAME, requestId);</span>
+
+<span class="nc" id="L71">        var requestLogBuilder = RequestLog.builder()</span>
+<span class="nc" id="L72">                .requestId(requestId)</span>
+<span class="nc" id="L73">                .method(mutatedRequest.getMethod().name())</span>
+<span class="nc" id="L74">                .path(mutatedRequest.getPath().value());</span>
+
+<span class="nc bnc" id="L76" title="All 2 branches missed.">        var mutatedExchange = properties.getLogging().getBodies()</span>
+<span class="nc" id="L77">                ? logBodies(mutatedRequest, exchange.getResponse(), exchange, requestLogBuilder)</span>
+<span class="nc" id="L78">                : exchange.mutate()</span>
+<span class="nc" id="L79">                    .request(mutatedRequest)</span>
+<span class="nc" id="L80">                    .build();</span>
+
+<span class="nc" id="L82">        return chain.filter(mutatedExchange).doFinally(signalType -&gt; {</span>
+<span class="nc" id="L83">            long responseTime = System.currentTimeMillis() - startTime;</span>
+
+<span class="nc" id="L85">            HttpStatusCode statusCode = mutatedExchange.getResponse().getStatusCode();</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">            int rawStatusCode = (statusCode != null) ? statusCode.value() : 0;</span>
+
+<span class="nc" id="L88">            var requestLog = requestLogBuilder</span>
+<span class="nc" id="L89">                    .responseCode(rawStatusCode)</span>
+<span class="nc" id="L90">                    .responseTime(responseTime)</span>
+<span class="nc" id="L91">                    .build();</span>
+
+<span class="nc" id="L93">            MDC.put(MDC_KEY, requestId);</span>
+            try {
+<span class="nc" id="L95">                String mappedLog = mapper.writeValueAsString(requestLog);</span>
+<span class="nc" id="L96">                log.info(mappedLog);</span>
+<span class="nc" id="L97">            } catch (JsonProcessingException e) {</span>
+<span class="nc" id="L98">                log.error(&quot;Exception occurred while mapping log message&quot;, e);</span>
+            } finally {
+<span class="nc" id="L100">                MDC.remove(MDC_KEY);</span>
+            }
+<span class="nc" id="L102">        });</span>
+    }
+
+    private ServerWebExchange logBodies(ServerHttpRequest request,
+                                        ServerHttpResponse response,
+                                        ServerWebExchange exchange,
+                                        RequestLog.RequestLogBuilder logBuilder) {
+<span class="nc" id="L109">        logRequestBody(request, logBuilder);</span>
+<span class="nc" id="L110">        return exchange.mutate()</span>
+<span class="nc" id="L111">                .request(request)</span>
+<span class="nc" id="L112">                .response(new ResponseLoggingDecorator(response, logBuilder, dataMasker))</span>
+<span class="nc" id="L113">                .build();</span>
+    }
+
+    private void logRequestBody(ServerHttpRequest request, RequestLog.RequestLogBuilder logBuilder) {
+<span class="nc" id="L117">        var decoratedRequest = new ServerHttpRequestDecorator(request);</span>
+
+<span class="nc" id="L119">        decoratedRequest.getBody().buffer().map(dataBuffers -&gt; {</span>
+<span class="nc" id="L120">            var bufferFactory = new DefaultDataBufferFactory();</span>
+<span class="nc" id="L121">            DataBuffer joinedBuffers = bufferFactory.join(dataBuffers);</span>
+
+<span class="nc" id="L123">            var content = new byte[joinedBuffers.readableByteCount()];</span>
+<span class="nc" id="L124">            joinedBuffers.read(content);</span>
+
+<span class="nc" id="L126">            DataBufferUtils.release(joinedBuffers);</span>
+
+<span class="nc" id="L128">            String requestBody = new String(content, StandardCharsets.UTF_8);</span>
+<span class="nc" id="L129">            String maskedRequestBody = dataMasker.maskData(requestBody);</span>
+
+<span class="nc" id="L131">            logBuilder.requestBody(maskedRequestBody);</span>
+
+<span class="nc" id="L133">            return bufferFactory.wrap(content);</span>
+<span class="nc" id="L134">        }).subscribe();</span>
+<span class="nc" id="L135">    }</span>
+
+    @Override
+    public int getOrder() {
+<span class="nc" id="L139">        return -2;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

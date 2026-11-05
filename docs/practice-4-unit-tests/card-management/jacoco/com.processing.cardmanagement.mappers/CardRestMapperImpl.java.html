@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CardRestMapperImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">card-management</a> &gt; <a href="index.source.html" class="el_package">com.processing.cardmanagement.mappers</a> &gt; <span class="el_source">CardRestMapperImpl.java</span></div><h1>CardRestMapperImpl.java</h1><pre class="source lang-java linenums">package com.processing.cardmanagement.mappers;
+
+import com.processing.cardmanagement.models.Card;
+import com.processing.cardmanagement.models.CardStatus;
+import com.processing.common.dto.cardmanagement.CardModel;
+import com.processing.common.dto.cardmanagement.CardModelStatus;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.YearMonth;
+import java.util.UUID;
+import javax.annotation.processing.Generated;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+@Generated(
+    value = &quot;org.mapstruct.ap.MappingProcessor&quot;,
+    date = &quot;2026-11-05T12:17:58+0300&quot;,
+    comments = &quot;version: 1.6.3, compiler: javac, environment: Java 21.0.3 (Oracle Corporation)&quot;
+)
+@Component
+<span class="nc" id="L21">public class CardRestMapperImpl implements CardRestMapper {</span>
+
+    @Autowired
+    private CardStatusMapper cardStatusMapper;
+
+    @Override
+    public CardModel toDto(Card card) {
+<span class="nc bnc" id="L28" title="All 2 branches missed.">        if ( card == null ) {</span>
+<span class="nc" id="L29">            return null;</span>
+        }
+
+<span class="nc" id="L32">        UUID id = null;</span>
+<span class="nc" id="L33">        String pan = null;</span>
+<span class="nc" id="L34">        String bin = null;</span>
+<span class="nc" id="L35">        String cardholderName = null;</span>
+<span class="nc" id="L36">        YearMonth expiryDate = null;</span>
+<span class="nc" id="L37">        CardModelStatus status = null;</span>
+<span class="nc" id="L38">        String currencyCode = null;</span>
+<span class="nc" id="L39">        BigDecimal dailyLimit = null;</span>
+<span class="nc" id="L40">        BigDecimal monthlyLimit = null;</span>
+<span class="nc" id="L41">        BigDecimal availableBalance = null;</span>
+<span class="nc" id="L42">        String issuerId = null;</span>
+<span class="nc" id="L43">        Instant createdAt = null;</span>
+
+<span class="nc" id="L45">        id = card.id();</span>
+<span class="nc" id="L46">        pan = card.pan();</span>
+<span class="nc" id="L47">        bin = card.bin();</span>
+<span class="nc" id="L48">        cardholderName = card.cardholderName();</span>
+<span class="nc" id="L49">        expiryDate = card.expiryDate();</span>
+<span class="nc" id="L50">        status = cardStatusMapper.toCardModelStatus( card.status() );</span>
+<span class="nc" id="L51">        currencyCode = card.currencyCode();</span>
+<span class="nc" id="L52">        dailyLimit = roundBalance( card.dailyLimit() );</span>
+<span class="nc" id="L53">        monthlyLimit = roundBalance( card.monthlyLimit() );</span>
+<span class="nc" id="L54">        availableBalance = roundBalance( card.availableBalance() );</span>
+<span class="nc" id="L55">        issuerId = card.issuerId();</span>
+<span class="nc" id="L56">        createdAt = card.createdAt();</span>
+
+<span class="nc" id="L58">        CardModel cardModel = new CardModel( id, pan, bin, cardholderName, expiryDate, status, currencyCode, dailyLimit, monthlyLimit, availableBalance, issuerId, createdAt );</span>
+
+<span class="nc" id="L60">        return cardModel;</span>
+    }
+
+    @Override
+    public Card toDomain(CardModel model) {
+<span class="nc bnc" id="L65" title="All 2 branches missed.">        if ( model == null ) {</span>
+<span class="nc" id="L66">            return null;</span>
+        }
+
+<span class="nc" id="L69">        UUID id = null;</span>
+<span class="nc" id="L70">        String pan = null;</span>
+<span class="nc" id="L71">        String bin = null;</span>
+<span class="nc" id="L72">        String cardholderName = null;</span>
+<span class="nc" id="L73">        YearMonth expiryDate = null;</span>
+<span class="nc" id="L74">        CardStatus status = null;</span>
+<span class="nc" id="L75">        String currencyCode = null;</span>
+<span class="nc" id="L76">        BigDecimal dailyLimit = null;</span>
+<span class="nc" id="L77">        BigDecimal monthlyLimit = null;</span>
+<span class="nc" id="L78">        BigDecimal availableBalance = null;</span>
+<span class="nc" id="L79">        String issuerId = null;</span>
+<span class="nc" id="L80">        Instant createdAt = null;</span>
+
+<span class="nc" id="L82">        id = model.id();</span>
+<span class="nc" id="L83">        pan = model.pan();</span>
+<span class="nc" id="L84">        bin = model.bin();</span>
+<span class="nc" id="L85">        cardholderName = model.cardholderName();</span>
+<span class="nc" id="L86">        expiryDate = model.expiryDate();</span>
+<span class="nc" id="L87">        status = cardStatusMapper.toCardStatus( model.status() );</span>
+<span class="nc" id="L88">        currencyCode = model.currencyCode();</span>
+<span class="nc" id="L89">        dailyLimit = roundBalance( model.dailyLimit() );</span>
+<span class="nc" id="L90">        monthlyLimit = roundBalance( model.monthlyLimit() );</span>
+<span class="nc" id="L91">        availableBalance = roundBalance( model.availableBalance() );</span>
+<span class="nc" id="L92">        issuerId = model.issuerId();</span>
+<span class="nc" id="L93">        createdAt = model.createdAt();</span>
+
+<span class="nc" id="L95">        Card card = new Card( id, pan, bin, cardholderName, expiryDate, status, currencyCode, dailyLimit, monthlyLimit, availableBalance, issuerId, createdAt );</span>
+
+<span class="nc" id="L97">        return card;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

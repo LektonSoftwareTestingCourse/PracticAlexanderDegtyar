@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReservationRollbackRepositoryPersistenceAdapter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">card-management</a> &gt; <a href="index.source.html" class="el_package">com.processing.cardmanagement.repositories</a> &gt; <span class="el_source">ReservationRollbackRepositoryPersistenceAdapter.java</span></div><h1>ReservationRollbackRepositoryPersistenceAdapter.java</h1><pre class="source lang-java linenums">package com.processing.cardmanagement.repositories;
+
+import com.processing.cardmanagement.mappers.ReservationRollbackPersistenceMapper;
+import com.processing.cardmanagement.models.ReservationRollback;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
+
+@Repository
+@RequiredArgsConstructor
+public class ReservationRollbackRepositoryPersistenceAdapter
+    implements ReservationRollbackRepository {
+
+    private final ReservationRollbackPersistenceMapper mapper;
+    private final ReservationRollbackJpaRepository jpaRepository;
+
+    @Override
+    public ReservationRollback save(ReservationRollback rollback) {
+<span class="nc" id="L18">        return mapper.toDomain(</span>
+<span class="nc" id="L19">            jpaRepository.save(mapper.toEntity(rollback))</span>
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -27,7 +27,12 @@ repos:
   - id: check-yaml
     name: "Check YAML syntax"
     args: [ --allow-multiple ]
-    exclude: ^starters/java/target/
+    exclude: ^(?:starters/java/target/|services/api-tests/compose\.override\.yaml$)
+  - id: check-yaml
+    alias: check-compose-yaml
+    name: "Check Compose override YAML syntax"
+    args: [ --unsafe ]
+    files: ^services/api-tests/compose\.override\.yaml$
   - id: check-json
     name: "Check JSON syntax"
   - id: check-merge-conflict

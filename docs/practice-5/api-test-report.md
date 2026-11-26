@@ -104,7 +104,9 @@ SwitchUnavailableIT  Tests run:   1, Failures: 0, Errors: 0, Skipped: 0
 ```sh
 make api-test
 ```
-либо выполнить скрипт 
-```
-/scripts/api-test.sh
+
+Либо из корня проекта в Bash:
+
+```sh
+bash ./scripts/api-test.sh
 ```

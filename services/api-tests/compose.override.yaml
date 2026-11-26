@@ -1,0 +1,23 @@
+services:
+  postgres:
+    container_name: !reset null
+    ports: !reset []
+  rabbitmq:
+    container_name: !reset null
+    ports: !reset []
+  gateway:
+    container_name: !reset null
+  card-management:
+    container_name: !reset null
+  switch:
+    container_name: !reset null
+    environment:
+      SPRING_RABBITMQ_CONNECTION_TIMEOUT: 2s
+  authorization:
+    container_name: !reset null
+  bin-lookup:
+    container_name: !reset null
+  merchant-acquirer:
+    container_name: !reset null
+  transaction-logger:
+    container_name: !reset null

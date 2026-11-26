@@ -1,0 +1,29 @@
+name: Practice 5 API tests
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+jobs:
+  api-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - run: make api-test
+      - if: failure()
+        run: docker compose --env-file .env.example -f docker-compose.yaml -f services/api-tests/compose.override.yaml -p practic-api-test logs --no-color
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-test-results
+          path: services/api-tests/target/surefire-reports/
+          if-no-files-found: ignore
+      - if: always()
+        run: make api-test-down

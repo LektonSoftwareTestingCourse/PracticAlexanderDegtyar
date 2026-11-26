@@ -107,3 +107,23 @@ npm-test:
 
 npm-build:
 	cd $(NPM_DIR) && npm run build
+
+API_GATEWAY_PORT ?= 18080
+API_COMPOSE = GATEWAY_PORT=$(API_GATEWAY_PORT) docker compose --env-file .env.example -f docker-compose.yaml -f services/api-tests/compose.override.yaml -p practic-api-test
+API_MAVEN = mvn -B -ntp -f services/pom.xml -Papi-tests -Dapi.gateway=http://localhost:$(API_GATEWAY_PORT)
+
+.PHONY: api-test api-test-down
+api-test:
+	$(API_COMPOSE) up -d --build --wait --wait-timeout 240 gateway terminal-simulator merchant-acquirer bin-lookup
+	$(API_MAVEN) test
+	@set -e; \
+	  trap '$(API_COMPOSE) up -d --no-deps --wait --wait-timeout 90 rabbitmq' EXIT; \
+	  $(API_COMPOSE) stop rabbitmq; \
+	  $(API_MAVEN) -Dtest=BrokerRollbackIT test
+	@set -e; \
+	  trap '$(API_COMPOSE) up -d --no-deps --wait --wait-timeout 90 switch' EXIT; \
+	  $(API_COMPOSE) stop switch; \
+	  $(API_MAVEN) -Dtest=SwitchUnavailableIT test
+
+api-test-down:
+	$(API_COMPOSE) down

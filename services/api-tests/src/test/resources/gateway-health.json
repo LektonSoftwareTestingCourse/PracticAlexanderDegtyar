@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "required": ["status", "service", "version", "services"],
+  "properties": {
+    "status": {"enum": ["ok", "degraded", "unavailable"]},
+    "service": {"type": "string", "minLength": 1},
+    "version": {"type": "string", "minLength": 1},
+    "services": {"type": "object", "minProperties": 4}
+  }
+}
